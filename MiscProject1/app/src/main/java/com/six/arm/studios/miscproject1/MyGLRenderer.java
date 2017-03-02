@@ -5,11 +5,17 @@ import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.SystemClock;
+import android.util.Log;
 
 import com.six.arm.studios.miscproject1.shape.Square;
 import com.six.arm.studios.miscproject1.shape.Triangle;
 
+import java.util.concurrent.TimeUnit;
+
 import javax.microedition.khronos.opengles.GL10;
+
+import rx.Observable;
+import rx.functions.Action1;
 
 /**
  * Created by sithel on 2/28/17.
@@ -24,7 +30,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
 
     private float[] mRotationMatrix = new float[16];
 
-    private Triangle mTriangle;
+    public Triangle mTriangle;
     private Square mSquare;
 
     // Since the renderer code is running on a separate thread from the main user
@@ -81,6 +87,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         mTriangle = new Triangle();
         // initialize a square
         mSquare = new Square();
+
     }
 
     @Override

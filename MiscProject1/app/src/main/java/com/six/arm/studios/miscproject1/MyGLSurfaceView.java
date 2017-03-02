@@ -2,7 +2,13 @@ package com.six.arm.studios.miscproject1;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
+import android.util.Log;
 import android.view.MotionEvent;
+
+import java.util.concurrent.TimeUnit;
+
+import rx.Observable;
+import rx.functions.Action1;
 
 /**
  * Created by sithel on 2/28/17.
@@ -10,7 +16,7 @@ import android.view.MotionEvent;
  */
 
 class MyGLSurfaceView extends GLSurfaceView {
-
+    public static final String TAG = MyGLSurfaceView.class.getName();
     private final MyGLRenderer mRenderer;
     private final float TOUCH_SCALE_FACTOR = 180.0f / 320;
     private float mPreviousX;
@@ -33,12 +39,12 @@ class MyGLSurfaceView extends GLSurfaceView {
 
                 // reverse direction of rotation above the mid-line
                 if (y > getHeight() / 2) {
-                    dx = dx * -1 ;
+                    dx = dx * -1;
                 }
 
                 // reverse direction of rotation to left of the mid-line
                 if (x < getWidth() / 2) {
-                    dy = dy * -1 ;
+                    dy = dy * -1;
                 }
 
                 mRenderer.setAngle(
@@ -52,7 +58,7 @@ class MyGLSurfaceView extends GLSurfaceView {
         return true;
     }
 
-    public MyGLSurfaceView(Context context){
+    public MyGLSurfaceView(Context context) {
         super(context);
 
         // Create an OpenGL ES 2.0 context
@@ -65,7 +71,26 @@ class MyGLSurfaceView extends GLSurfaceView {
 
         // Render the view only when there is a change in the drawing data
         // To allow the triangle to rotate automatically, this line is commented out:
-        setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+//        setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+
+        Observable.interval(10, TimeUnit.MICROSECONDS).subscribe(new Action1<Long>() {
+            @Override
+            public void call(Long aLong) {
+                if (mRenderer == null) {
+//                    Log.i(TAG, "wtf, null render?");
+                } else if (mRenderer.mTriangle == null) {
+//                    Log.i(TAG, "wtf, null triangle?");
+                } else {
+                    mRenderer.mTriangle.bumpTime();
+                }
+            }
+        }, new Action1<Throwable>() {
+            @Override
+            public void call(Throwable throwable) {
+                Log.e("Rebecca", "Rebecca, saw bad shet : " + throwable);
+//                requestRender();
+            }
+        });
 
     }
 }

@@ -7,6 +7,7 @@ import android.opengl.Matrix;
 import android.os.SystemClock;
 import android.util.Log;
 
+import com.six.arm.studios.miscproject1.shape.NoobParticles;
 import com.six.arm.studios.miscproject1.shape.Square;
 import com.six.arm.studios.miscproject1.shape.Triangle;
 
@@ -32,6 +33,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
 
     public Triangle mTriangle;
     private Square mSquare;
+    private NoobParticles mParts;
 
     // Since the renderer code is running on a separate thread from the main user
     // interface thread of your application, you must declare this public variable
@@ -76,6 +78,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
 
         // Draw shape
         mTriangle.draw(scratch);
+        mParts.draw(scratch);
     }
 
     @Override
@@ -87,6 +90,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         mTriangle = new Triangle();
         // initialize a square
         mSquare = new Square();
+        mParts = new NoobParticles();
 
     }
 

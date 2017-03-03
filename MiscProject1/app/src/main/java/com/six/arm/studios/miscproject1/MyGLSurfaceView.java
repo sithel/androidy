@@ -2,6 +2,7 @@ package com.six.arm.studios.miscproject1;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 
@@ -17,7 +18,7 @@ import rx.functions.Action1;
 
 class MyGLSurfaceView extends GLSurfaceView {
     public static final String TAG = MyGLSurfaceView.class.getName();
-    private final MyGLRenderer mRenderer;
+    private MyGLRenderer mRenderer;
     private final float TOUCH_SCALE_FACTOR = 180.0f / 520;
     private float mPreviousX;
     private float mPreviousY;
@@ -65,8 +66,22 @@ class MyGLSurfaceView extends GLSurfaceView {
         return true;
     }
 
+//    @Override
+//    protected void onFinishInflate() {
+//        super.onFinishInflate();
+//    }
+
     public MyGLSurfaceView(Context context) {
         super(context);
+    }
+
+    public MyGLSurfaceView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+    }
+
+
+    @Override
+    protected void onFinishInflate() {
 
         // Create an OpenGL ES 2.0 context
         setEGLContextClientVersion(2);

@@ -46,8 +46,10 @@ public class Triangle {
                     "precision mediump float;" +
                     "uniform vec4 vColor;" +
                     "uniform float u_time;" +
+                    "uniform vec2 u_mouse;" +
                     "void main() {" +
-                    "  gl_FragColor = vec4(DestinationColor[0],abs(sin(u_time * DestinationColor[1])),DestinationColor[2],1.0);" +
+//                    "  gl_FragColor = vec4(u_mouse[1], 0,DestinationColor[2],1.0);" +
+                    "  gl_FragColor = vec4(DestinationColor[0] * u_mouse[0],abs(sin(u_time * DestinationColor[1])),DestinationColor[2] * u_mouse[1],1.0);" +
 //                    "  gl_FragColor = DestinationColor;" + //hack
 //                    "  gl_FragColor = vColor;" +  nuked for hack
                     "}";
@@ -60,6 +62,7 @@ public class Triangle {
 
     private int mPositionHandle;
     private int mTimeHandle;
+    private int mMouseHandle;
     private int mColorHandle;
     private int mColorHandleHack;
 
@@ -94,6 +97,7 @@ public class Triangle {
             0.0f, 0.0f, 1.0f, 1.0f, // bottom left
             1.0f, 1.0f, 1.0f, 1.0f  // top left
     };
+    float mouse[] = {0f, 0f};
 
     public Triangle() {
         // initialize vertex byte buffer for shape coordinates
@@ -176,6 +180,8 @@ public class Triangle {
         // book
         mTimeHandle = GLES20.glGetUniformLocation(mProgram, "u_time");
         GLES20.glUniform1f(mTimeHandle, mTime);
+        mMouseHandle = GLES20.glGetUniformLocation(mProgram, "u_mouse");
+        GLES20.glUniform2fv(mMouseHandle, 1, mouse, 0);
 
         // get handle to shape's transformation matrix
         mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram, "uMVPMatrix");
@@ -202,19 +208,23 @@ public class Triangle {
         }
     }
 
-    float mDelta = 0.01f;
+    float mDelta = 0.005f;
     float mTime = mDelta;
     boolean isInc = true;
 
-    public void bumpTime() {
+    public static final String TAG = Triangle.class.getName();
+    public void bumpTime(Long time) {
         mTime = isInc ? mTime + mDelta : mTime - mDelta;
         if (mTime <= mDelta || mTime >= 100) {
             isInc = !isInc;
         }
         GLES20.glUniform1f(mTimeHandle, mTime);
-//        Log.i("TAG", "bump time to "+mTime+" --> "+mTimeHandle);
+    }
 
-//        mTimeHandle = GLES20.glGetUniformLocation(mProgram, "u_time");
-//        GLES20.glUniform1f(mTimeHandle, mTime);
+    public void bumpMouse(float x, float y) {
+//        GLES20.glUniform1f(mTimeHandle, x);
+        mouse = new float[] {x, y};
+//        GLES20.glUniform2fv(mMouseHandle, 1, mouse, 0);
+//        Log.i(TAG, "and now with x/y "+x+", "+y);
     }
 }

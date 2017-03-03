@@ -18,7 +18,7 @@ import rx.functions.Action1;
 class MyGLSurfaceView extends GLSurfaceView {
     public static final String TAG = MyGLSurfaceView.class.getName();
     private final MyGLRenderer mRenderer;
-    private final float TOUCH_SCALE_FACTOR = 180.0f / 320;
+    private final float TOUCH_SCALE_FACTOR = 180.0f / 520;
     private float mPreviousX;
     private float mPreviousY;
 
@@ -50,7 +50,14 @@ class MyGLSurfaceView extends GLSurfaceView {
                 mRenderer.setAngle(
                         mRenderer.getAngle() +
                                 ((dx + dy) * TOUCH_SCALE_FACTOR));
-                requestRender();
+//                requestRender();
+                if (mRenderer == null) {
+//                    Log.i(TAG, "wtf, null render?");
+                } else if (mRenderer.mTriangle == null) {
+//                    Log.i(TAG, "wtf, null triangle?");
+                } else {
+                    mRenderer.mTriangle.bumpMouse(x / MyGLSurfaceView.this.getWidth(), y / MyGLSurfaceView.this.getHeight());
+                }
         }
 
         mPreviousX = x;
@@ -81,7 +88,7 @@ class MyGLSurfaceView extends GLSurfaceView {
                 } else if (mRenderer.mTriangle == null) {
 //                    Log.i(TAG, "wtf, null triangle?");
                 } else {
-                    mRenderer.mTriangle.bumpTime();
+                    mRenderer.mTriangle.bumpTime(aLong);
                 }
             }
         }, new Action1<Throwable>() {

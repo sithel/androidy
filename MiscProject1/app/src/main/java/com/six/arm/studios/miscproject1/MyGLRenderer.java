@@ -30,6 +30,9 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     private final float[] mViewMatrix = new float[16];
 
     private float[] mRotationMatrix = new float[16];
+    private float[] mRotationMatrixX = new float[16];
+    private float[] mRotationMatrixY = new float[16];
+    private float[] mRotationMatrixZ = new float[16];
 
     public Triangle mTriangle;
     private Square mSquare;
@@ -38,14 +41,13 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     // Since the renderer code is running on a separate thread from the main user
     // interface thread of your application, you must declare this public variable
     // as volatile.
-    public volatile float mAngle;
+    public volatile float mAngleX;
+    public volatile float mAngleY;
 
-    public float getAngle() {
-        return mAngle;
-    }
 
-    public void setAngle(float angle) {
-        mAngle = angle;
+    public void setAngle(float angleX, float angleY) {
+        mAngleX += angleX/100f;
+        mAngleY += angleY/100f;
     }
 
 
@@ -57,7 +59,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         // Set the camera position (View matrix)
-        Matrix.setLookAtM(mViewMatrix, 0, 0, 0, -3, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
+        Matrix.setLookAtM(mViewMatrix, 0, mAngleX, mAngleY, -3, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
 
         // Calculate the projection and view transformation
         Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mViewMatrix, 0);
@@ -65,10 +67,15 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
 
 
         // Create a rotation transformation for the triangle
-//        long time = SystemClock.uptimeMillis() % 4000L;
-//        float angle = 0.090f * ((int) time);
-//        Matrix.setRotateM(mRotationMatrix, 0, angle, 0, 0, -1.0f);
-        Matrix.setRotateM(mRotationMatrix, 0, mAngle, 0, 0, -1.0f);
+        long time = SystemClock.uptimeMillis() % 4000L;
+        float angle = 0.090f * ((int) time);
+        Matrix.setRotateM(mRotationMatrix, 0, angle, 0, 0, -1.0f);
+//        Matrix.setRotateM(mRotationMatr   ix, 0, angle, -1.0f, 0, 0);
+//        Matrix.setRotateM(mRotationMatrixX, 0, mAngleX, -1.0f, 0, 0);
+//        Matrix.setRotateM(mRotationMatrixY, 0, mAngleY, 0, -1.0f, 0.0f);
+
+//        Matrix.multiplyMM(mRotationMatrix, 0, mRotationMatrixY, 0, mRotationMatrixX, 0);
+//        Matrix.multiplyMM(mRotationMatrix, 0, mRotationMatrix, 0, mRotationMatrixZ, 0);
 
         // Combine the rotation matrix with the projection and camera view
         // Note that the mMVPMatrix factor *must be first* in order

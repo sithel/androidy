@@ -1,6 +1,7 @@
 package com.six.arm.studios.miscproject1.shape;
 
 import android.opengl.GLES20;
+import android.opengl.GLES31;
 import android.util.Log;
 
 import com.six.arm.studios.miscproject1.MyGLRenderer;
@@ -44,7 +45,7 @@ public class NoobParticles {
                     + "   float dist = distance( vec2(0.5,0.5), gl_PointCoord );\n"
                     + "  if ( dist > 0.5 *  gl_FragCoord[2] )\n"
                     + "       discard;\n"
-                    + "   gl_FragColor = vec4(gl_PointCoord[0],gl_PointCoord[1], 1.0, 0.5f);             \n"
+                    + "   gl_FragColor = vec4(gl_PointCoord[0],gl_PointCoord[1], 1.0, 0.75f);             \n"
                     + "  gl_FragColor.a = 0.1f; \n"
                     + "}                              \n";
     private static float dotCoords[] = {   // in counterclockwise order:
@@ -112,8 +113,16 @@ public class NoobParticles {
         mPositionHandle = GLES20.glGetAttribLocation(mProgram, "a_Position");
         mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram, "u_MVPMatrix");
 
+        // No culling of back faces
+        GLES20.glDisable(GLES20.GL_CULL_FACE);
+
+        // No depth testing
+        GLES20.glDisable(GLES20.GL_DEPTH_TEST);
+
+        // http://www.learnopengles.com/android-lesson-five-an-introduction-to-blending/
         GLES20.glEnable(GLES20.GL_BLEND);
-        GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+//        GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE);     // Additive
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);     //Interpolative
 
         Observable
                 .interval(10, TimeUnit.MILLISECONDS)

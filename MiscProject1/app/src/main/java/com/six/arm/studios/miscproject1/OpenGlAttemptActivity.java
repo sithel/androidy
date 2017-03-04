@@ -5,6 +5,8 @@ import android.support.annotation.LayoutRes;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -19,9 +21,15 @@ public class OpenGlAttemptActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // remove title
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
         View v = getLayoutInflater().inflate(LAYOUT_ID, null);
         setContentView(v);
         ButterKnife.bind(this);
+        mGLView.setPreserveEGLContextOnPause(true);
 
         // Create a GLSurfaceView instance and set it
         // as the ContentView for this Activity.

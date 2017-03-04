@@ -200,6 +200,9 @@ public class Triangle {
 
         // Disable vertex array
         GLES20.glDisableVertexAttribArray(mPositionHandle);
+        GLES20.glDisableVertexAttribArray(mMVPMatrixHandle);
+        GLES20.glDisableVertexAttribArray(mMouseHandle);
+        GLES20.glDisableVertexAttribArray(mColorHandle);
         GLES20.glDisableVertexAttribArray(mColorHandleHack);
 
         color[0] += 0.001;

@@ -59,7 +59,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         // Set the camera position (View matrix)
-        Matrix.setLookAtM(mViewMatrix, 0, mAngleX, mAngleY, -3, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
+        Matrix.setLookAtM(mViewMatrix, 0, 0, 0, -3, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
 
         // Calculate the projection and view transformation
         Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mViewMatrix, 0);
@@ -69,7 +69,8 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         // Create a rotation transformation for the triangle
         long time = SystemClock.uptimeMillis() % 4000L;
         float angle = 0.090f * ((int) time);
-        Matrix.setRotateM(mRotationMatrix, 0, angle, 0, 0, -1.0f);
+        Matrix.setRotateM(mRotationMatrix, 0, 0, 0, 0, -1.0f);
+//        Matrix.setRotateM(mRotationMatrix, 0, angle, 0, 0, -1.0f);
 //        Matrix.setRotateM(mRotationMatr   ix, 0, angle, -1.0f, 0, 0);
 //        Matrix.setRotateM(mRotationMatrixX, 0, mAngleX, -1.0f, 0, 0);
 //        Matrix.setRotateM(mRotationMatrixY, 0, mAngleY, 0, -1.0f, 0.0f);
@@ -93,11 +94,11 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         // Set the background frame color
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
+        mParts = new NoobParticles();
         // initialize a triangle
         mTriangle = new Triangle();
         // initialize a square
         mSquare = new Square();
-        mParts = new NoobParticles();
 
     }
 

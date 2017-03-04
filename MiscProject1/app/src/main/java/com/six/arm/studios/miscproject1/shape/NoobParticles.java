@@ -35,7 +35,7 @@ public class NoobParticles {
                     + "{                              \n"
                     + "   gl_Position = u_MVPMatrix   \n"
                     + "               * a_Position;   \n"
-                    + "   gl_PointSize = 190.0;       \n"
+                    + "   gl_PointSize = 50.0;       \n"
                     + "}                              \n";
 
     final String fragmentShaderCode =
@@ -43,10 +43,11 @@ public class NoobParticles {
                     + "void main()                    \n"
                     + "{                              \n"
                     + "   float dist = distance( vec2(0.5,0.5), gl_PointCoord );\n"
-                    + "  if ( dist > 0.5 *  gl_FragCoord[2] )\n"
+                    + "   float zdist = abs(gl_FragCoord[2]*4.0); \n"
+                    + "   float r = min(0.5, zdist); \n"
+                    + "  if ( dist > r)\n"
                     + "       discard;\n"
-                    + "   gl_FragColor = vec4(gl_PointCoord[0],gl_PointCoord[1], 1.0, 0.75f);             \n"
-                    + "  gl_FragColor.a = 0.1f; \n"
+                    + "   gl_FragColor = vec4(gl_PointCoord[0],gl_PointCoord[1], min(1.0, zdist*1.0), min(1.0,dist*1.0) );             \n"
                     + "}                              \n";
     private static float dotCoords[] = {   // in counterclockwise order:
             0.01f, 0.05f, 1f,
@@ -56,10 +57,7 @@ public class NoobParticles {
     };
 
     List<RPoint> points = Arrays.asList(
-            new RPoint(0, 0, 0, 1),
-            new RPoint(1, 0, 0, 0.1f),
-            new RPoint(2, 0, 0, 1.2f),
-            new RPoint(3, 0, 0, 0.9f)
+            new RPoint(0, 0, 0, 1)
     );
     float[] vertices = {
             0.0f, 0.0f, 1.0f
@@ -80,8 +78,8 @@ public class NoobParticles {
 
     public NoobParticles() {
         points = new ArrayList<>();
-        for (int i = 0; i < 20; ++i) {
-            points.add(new RPoint(i, 0, 0, 1));
+        for (int i = 0; i < 500; ++i) {
+            points.add(new RPoint(i, 0, 1, 1));
         }
         dotCoords = new float[points.size() * 3];
         ByteBuffer bb = ByteBuffer.allocateDirect(dotCoords.length * 4); // (number of coordinate values * 4 bytes per float)
@@ -128,38 +126,74 @@ public class NoobParticles {
                 .interval(10, TimeUnit.MILLISECONDS)
                 .flatMap(new Func1<Long, Observable<RPoint>>() {
                     @Override
-                    public Observable<RPoint> call(Long aLong) {
-                        return Observable.from(points);
+                    public Observable<RPoint> call(final Long count) {
+                        return Observable.from(points)
+                                .map(new Func1<RPoint, RPoint>() {
+                                    @Override
+                                    public RPoint call(RPoint rPoint) {
+                                        rPoint.nudge(count);
+//                                        if (rPoint.i == 0) {
+//                                            Log.i(TAG, rPoint.toString());
+//                                        }
+                                        return rPoint;
+                                    }
+                                });
                     }
                 })
-                .subscribe(new Action1<RPoint>() {
-                    @Override
-                    public void call(RPoint rPoint) {
-                        rPoint.nudge(1);
-//                        Log.i(TAG, rPoint.toString());
-                    }
-                })
+                .subscribe()
         ;
 
     }
 
     class RPoint {
+        long lifetime;
+        long start;
+        float[] startPoint;
+
+        float xVel;
+        float yVel;
+
         int i;
         float x;
         float y;
         float z;
 
         public RPoint(int index, float x, float y, float z) {
+            start = 0;
+            lifetime = (long) (Math.random() * 1000) + 500;
+            startPoint = new float[]{x, y, z};
+            xVel = 0;
+            yVel = 0;
             i = index;
             this.x = x;
             this.y = y;
             this.z = z;
         }
 
+        private void reset(long count) {
+            xVel = (float) (2*(Math.random() - 0.5) / 100);
+            yVel = 0.01f;
+            x = startPoint[0];
+            y = startPoint[1];
+            z = startPoint[2];
+            start = count;
+        }
+
         public void nudge(long count) {
-            x += (Math.random() * 2 - 1) / 100f;
-            y += (Math.random() * 2 - 1) / 100f;
-            z += (Math.random() * 2 - 1) / 100f;
+            double r = Math.random();
+            long age = count - start;
+            if (age > lifetime) {
+                reset(count);
+                return;
+            }
+            if (count % 18 == 1) {
+                xVel = (float) (Math.random() - 0.5) / 100;
+            } else if (count % 10 == 1) {
+                yVel = (float) (Math.random() - 0.85)/100;
+            }
+            x += xVel;
+            y += yVel;
+            z = startPoint[2] - 4f * age / (lifetime);
         }
 
         public void updateArray(float[] dots) {
@@ -170,7 +204,7 @@ public class NoobParticles {
 
         @Override
         public String toString() {
-            return "[(" + i + ") x: " + x + ", y: " + y + ", z: " + z + "]";
+            return "[(" + i + ") x: " + x + ", y: " + y + ", z: " + z + ", start: " + start + ", lifetime: " + lifetime + "]";
         }
     }
 
@@ -187,7 +221,7 @@ public class NoobParticles {
             rp.updateArray(dotCoords);
 //            Log.i(TAG, rp.toString());
         }
-        vertexBuffer.clear();
+//        vertexBuffer.clear();
         vertexBuffer.put(dotCoords);
         vertexBuffer.position(0);
         GLES20.glVertexAttribPointer(mPositionHandle, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, vertexStride, vertexBuffer);
@@ -200,5 +234,10 @@ public class NoobParticles {
 
         //Draw the point
         GLES20.glDrawArrays(GLES20.GL_POINTS, 0, 1);
+
+        // Disable vertex array
+        GLES20.glDisableVertexAttribArray(mPositionHandle);
+        GLES20.glDisableVertexAttribArray(mMVPMatrixHandle);
+
     }
 }

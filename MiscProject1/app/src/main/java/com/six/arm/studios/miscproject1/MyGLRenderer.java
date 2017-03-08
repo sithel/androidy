@@ -1,5 +1,6 @@
 package com.six.arm.studios.miscproject1;
 
+import android.content.Context;
 import android.opengl.EGLConfig;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
@@ -7,6 +8,7 @@ import android.opengl.Matrix;
 import android.os.SystemClock;
 import android.util.Log;
 
+import com.six.arm.studios.miscproject1.shape.ImageOne;
 import com.six.arm.studios.miscproject1.shape.NoobParticles;
 import com.six.arm.studios.miscproject1.shape.Square;
 import com.six.arm.studios.miscproject1.shape.Triangle;
@@ -37,12 +39,17 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     public Triangle mTriangle;
     private Square mSquare;
     private NoobParticles mParts;
+    private ImageOne mImageThing;
 
     // Since the renderer code is running on a separate thread from the main user
     // interface thread of your application, you must declare this public variable
     // as volatile.
     public volatile float mAngleX;
     public volatile float mAngleY;
+
+    public MyGLRenderer(Context context) {
+        mImageThing = new ImageOne(context);
+    }
 
 
     public void setAngle(float angleX, float angleY) {
@@ -85,8 +92,9 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
 
 
         // Draw shape
-        mTriangle.draw(scratch);
-        mParts.draw(scratch);
+//        mTriangle.draw(scratch);
+//        mParts.draw(scratch);
+        mImageThing.draw();
     }
 
     @Override

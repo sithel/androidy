@@ -47,8 +47,9 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     public volatile float mAngleX;
     public volatile float mAngleY;
 
+    private Context mContext;
     public MyGLRenderer(Context context) {
-        mImageThing = new ImageOne(context);
+        mContext = context;
     }
 
 
@@ -94,7 +95,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         // Draw shape
 //        mTriangle.draw(scratch);
 //        mParts.draw(scratch);
-        mImageThing.draw();
+        mImageThing.draw(scratch);
     }
 
     @Override
@@ -107,6 +108,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         mTriangle = new Triangle();
         // initialize a square
         mSquare = new Square();
+        mImageThing = new ImageOne(mContext);
 
     }
 

@@ -110,8 +110,8 @@ public class Triangle {
         // create a floating point buffer from the ByteBuffer
         vertexBuffer = bb.asFloatBuffer();
         // add the coordinates to the FloatBuffer
-//        vertexBuffer.put(triangleCoords);
-        vertexBuffer.put(squareCoords);
+        vertexBuffer.put(triangleCoords);
+//        vertexBuffer.put(squareCoords);
         // set the buffer to read the first coordinate
         vertexBuffer.position(0);
 
@@ -190,13 +190,13 @@ public class Triangle {
         GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mvpMatrix, 0);
 
         // Draw the triangle
-//        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, vertexCount);
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, vertexCount);
 
 
         // Draw the square
-        GLES20.glDrawElements(
-                GLES20.GL_TRIANGLES, drawOrder.length,
-                GLES20.GL_UNSIGNED_SHORT, drawListBuffer);
+//        GLES20.glDrawElements(
+//                GLES20.GL_TRIANGLES, drawOrder.length,
+//                GLES20.GL_UNSIGNED_SHORT, drawListBuffer);
 
         // Disable vertex array
         GLES20.glDisableVertexAttribArray(mPositionHandle);

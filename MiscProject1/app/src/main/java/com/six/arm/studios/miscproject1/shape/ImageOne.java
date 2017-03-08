@@ -2,28 +2,24 @@ package com.six.arm.studios.miscproject1.shape;
 
 import android.content.Context;
 import android.opengl.GLES20;
+import android.util.Log;
 
+import com.six.arm.studios.miscproject1.MyGLRenderer;
 import com.six.arm.studios.miscproject1.R;
 import com.six.arm.studios.miscproject1.Utils;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.nio.ShortBuffer;
 
 /**
  * Created by sithel on 3/6/17.
  */
 
 public class ImageOne {
+    public static final String TAG = "ImageOne";
 
     private int mProgramHandle;
-
-    private static float triangleCoords[] = {   // in counterclockwise order:
-            0.0f, 0.622008459f, 0.0f, // top
-            -0.5f, -0.311004243f, 0.0f, // bottom left
-            0.5f, -0.311004243f, 0.0f,  // bottom right
-            0.5f, -0.622008459f, 0.0f  // bottom
-    };
-
 
     /**
      * This will be used to pass in the texture.
@@ -63,14 +59,10 @@ public class ImageOne {
     FloatBuffer mCubeTextureCoordinates;
 
     final float[] triangleCords =
-            {
-                    // Front face
-                    0.0f, 0.0f,
-                    0.0f, 1.0f,
-                    1.0f, 0.0f,
-                    0.0f, 1.0f,
-                    1.0f, 1.0f,
-                    1.0f, 0.0f
+            {  // in counterclockwise order:
+                    0.0f, 0.622008459f, 0.0f, // top
+                    -0.5f, -0.311004243f, 0.0f, // bottom left
+                    0.5f, -0.311004243f, 0.0f  // bottom right
             };
     FloatBuffer mVertexBuffer;
     /**
@@ -82,21 +74,118 @@ public class ImageOne {
      */
     private int mPositionHandle;
 
-    public ImageOne(Context context) {
-        mProgramHandle = Utils.createAndLinkProgram(
-                Utils.compileShader(GLES20.GL_VERTEX_SHADER, Utils.readTextFileFromRawResource(context, R.raw.vertexShader)),
-                Utils.compileShader(GLES20.GL_FRAGMENT_SHADER, Utils.readTextFileFromRawResource(context, R.raw.fragmentShader)),
-                new String[]{"a_Position", "a_Color", "a_Normal", "a_TexCoordinate"});
-// Load the texture
-        mTextureDataHandle = Utils.loadTexture(context, R.drawable.greenish_texture_1);
-        mVertexBuffer = Utils.createVertexBuffer(triangleCords);
-        mCubeTextureCoordinates = Utils.createVertexBuffer(cubeTextureCoordinateData);
+    // Use to access and set the view transformation
+    private int mMVPMatrixHandle;
 
+    static private final String vertexString =
+            "" +
+                    "uniform mat4 u_MVPMatrix;" +
+                    "attribute vec4 a_Position;" +
+                    "void main() {" +
+                    "  gl_Position = u_MVPMatrix * a_Position;" +
+                    "}";
+
+
+    static private final String fragString =
+            "" +
+                    "precision mediump float;" +
+                    "void main() {" +
+                    "  gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);" +
+                    "}";
+
+
+    public ImageOne(Context context, boolean x) {
+
+        Log.i(TAG, "rebecca, does this run?");
+        // initialize vertex byte buffer for shape coordinates
+        ByteBuffer bb = ByteBuffer.allocateDirect(
+                // (number of coordinate values * 4 bytes per float)
+                triangleCords.length * 4);
+        // use the device hardware's native byte order
+        bb.order(ByteOrder.nativeOrder());
+
+        // create a floating point buffer from the ByteBuffer
+        mVertexBuffer = bb.asFloatBuffer();
+        // add the coordinates to the FloatBuffer
+//        vertexBuffer.put(triangleCoords);
+        mVertexBuffer.put(triangleCords);
+        // set the buffer to read the first coordinate
+        mVertexBuffer.position(0);
+
+
+        int vertexShader = MyGLRenderer.loadShader(GLES20.GL_VERTEX_SHADER,
+                vertexString);
+        int fragmentShader = MyGLRenderer.loadShader(GLES20.GL_FRAGMENT_SHADER,
+                fragString);
+
+        // create empty OpenGL ES Program
+        mProgramHandle = GLES20.glCreateProgram();
+
+        // add the vertex shader to program
+        GLES20.glAttachShader(mProgramHandle, vertexShader);
+
+        // add the fragment shader to program
+        GLES20.glAttachShader(mProgramHandle, fragmentShader);
+
+        // creates OpenGL ES program executables
+        GLES20.glLinkProgram(mProgramHandle);
+    }
+    // remember: this needs to all happen AFTER the Renderer has gotten started...
+    public ImageOne(Context context) {
+//        String vertexString = ;
+//        Log.d(TAG, vertexString);
+//        String fragString = ;
+//        Log.d(TAG, fragString);
+        Log.e(TAG, "SHIT IS NOT RIGHT");
+        mProgramHandle = Utils.createAndLinkProgram_v2(
+                Utils.compileShader(GLES20.GL_VERTEX_SHADER, Utils.readTextFileFromRawResource(context, R.raw.vertex_shader)),
+                Utils.compileShader(GLES20.GL_FRAGMENT_SHADER, Utils.readTextFileFromRawResource(context, R.raw.fragment_shader)),
+                new String[]{"a_TexCoordinate"});
+//                new String[]{});
+
+        // Load the texture
+        mTextureDataHandle = Utils.loadTexture(context, R.drawable.greenish_texture_2);
+        mCubeTextureCoordinates = Utils.createVertexBuffer(cubeTextureCoordinateData);
+        mVertexBuffer = Utils.createVertexBuffer(triangleCords);
     }
 
-    public void draw() {
+    public void draw(float[] mvpMatrix) {
+
+        // Add program to OpenGL ES environment
+        GLES20.glUseProgram(mProgramHandle);
+
+        // get handle to vertex shader's vPosition member
+        mPositionHandle = GLES20.glGetAttribLocation(mProgramHandle, "a_Position");
+
+        // Enable a handle to the triangle vertices
+        GLES20.glEnableVertexAttribArray(mPositionHandle);
+
+        // Prepare the triangle coordinate data
+        GLES20.glVertexAttribPointer(mPositionHandle, 3,
+                GLES20.GL_FLOAT, false,
+                3*4, mVertexBuffer);
+
+
+        // Draw the triangle
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, triangleCords.length/3);
+
+        // get handle to shape's transformation matrix
+        mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgramHandle, "u_MVPMatrix");
+
+        // Pass the projection and view transformation to the shader
+        GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mvpMatrix, 0);
+
+        // Disable vertex array
+        GLES20.glDisableVertexAttribArray(mPositionHandle);
+        GLES20.glDisableVertexAttribArray(mMVPMatrixHandle);
+
+
         // Set our per-vertex lighting program.
         GLES20.glUseProgram(mProgramHandle);
+
+
+        mPositionHandle = GLES20.glGetAttribLocation(mProgramHandle, "a_Position");
+        mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgramHandle, "u_MVPMatrix");
 
         mTextureUniformHandle = GLES20.glGetUniformLocation(mProgramHandle, "u_Texture");
         mTextureCoordinateHandle = GLES20.glGetAttribLocation(mProgramHandle, "a_TexCoordinate");
@@ -110,21 +199,19 @@ public class ImageOne {
         // Tell the texture uniform sampler to use this texture in the shader by binding to texture unit 0.
         GLES20.glUniform1i(mTextureUniformHandle, 0);
 
-
-        mPositionHandle = GLES20.glGetAttribLocation(mProgramHandle, "a_Position");
         // Pass in the position information
-        mVertexBuffer.position(0);
-        GLES20.glVertexAttribPointer(mPositionHandle, mPositionDataSize, GLES20.GL_FLOAT, false,
-                0, mVertexBuffer);
-
+//        GLES20.glVertexAttribPointer(mPositionHandle, mPositionDataSize, GLES20.GL_FLOAT, false, 0, mVertexBuffer);
+        GLES20.glVertexAttribPointer(mPositionHandle, mPositionDataSize, GLES20.GL_FLOAT, false, mPositionDataSize * 4, mVertexBuffer);
         GLES20.glEnableVertexAttribArray(mPositionHandle);
 
         // Pass in the texture coordinate information
         mCubeTextureCoordinates.position(0);
-        GLES20.glVertexAttribPointer(mTextureCoordinateHandle, mTextureCoordinateDataSize, GLES20.GL_FLOAT, false,
-                0, mCubeTextureCoordinates);
+        GLES20.glVertexAttribPointer(mTextureCoordinateHandle, mTextureCoordinateDataSize, GLES20.GL_FLOAT, false, 0, mCubeTextureCoordinates);
 
         GLES20.glEnableVertexAttribArray(mTextureCoordinateHandle);
+
+        // Pass the projection and view transformation to the shader
+        GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mvpMatrix, 0);
     }
 
 }

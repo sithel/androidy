@@ -76,6 +76,22 @@ public class Utils {
     }
 
 
+    public static int createAndLinkProgram_v2(final int vertexShaderHandle, final int fragmentShaderHandle, final String[] attributes) {
+        // create empty OpenGL ES Program
+        int programHandle = GLES20.glCreateProgram();
+
+        // add the vertex shader to program
+        GLES20.glAttachShader(programHandle, vertexShaderHandle);
+
+        // add the fragment shader to program
+        GLES20.glAttachShader(programHandle, fragmentShaderHandle);
+
+        // creates OpenGL ES program executables
+        GLES20.glLinkProgram(programHandle);
+
+        return programHandle;
+    }
+
     /**
      * Helper function to compile a shader.
      *

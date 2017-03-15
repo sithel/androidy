@@ -136,7 +136,6 @@ public class ImageOne {
 //        Log.d(TAG, vertexString);
 //        String fragString = ;
 //        Log.d(TAG, fragString);
-        Log.e(TAG, "SHIT IS NOT RIGHT");
         mProgramHandle = Utils.createAndLinkProgram_v2(
                 Utils.compileShader(GLES20.GL_VERTEX_SHADER, Utils.readTextFileFromRawResource(context, R.raw.vertex_shader)),
                 Utils.compileShader(GLES20.GL_FRAGMENT_SHADER, Utils.readTextFileFromRawResource(context, R.raw.fragment_shader)),
@@ -151,6 +150,7 @@ public class ImageOne {
 
     public void draw(float[] mvpMatrix) {
 
+        short x = 2;
         // Add program to OpenGL ES environment
         GLES20.glUseProgram(mProgramHandle);
 

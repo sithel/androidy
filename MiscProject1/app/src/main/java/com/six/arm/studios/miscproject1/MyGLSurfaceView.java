@@ -61,7 +61,7 @@ class MyGLSurfaceView extends GLSurfaceView {
 
         mPreviousX = x;
         mPreviousY = y;
-        return true;
+        return false;
     }
 
 //    @Override

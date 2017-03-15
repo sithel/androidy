@@ -234,7 +234,7 @@ public class BluetoothStuff {
         Log.i(TAG, "a");
         mTalker.start();
         Log.i(TAG, "b");
-        mTalker.write("sharks!".getBytes());
+        mTalker.write("sharks!");
         Log.i(TAG, "c");
     }
 

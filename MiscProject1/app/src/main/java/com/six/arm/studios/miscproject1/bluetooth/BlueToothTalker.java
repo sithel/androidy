@@ -4,11 +4,13 @@ import android.bluetooth.BluetoothSocket;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Base64;
 import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Created by sithel on 3/14/17.
@@ -70,6 +72,7 @@ public class BlueToothTalker extends Thread {
                 readMsg.sendToTarget();
                 sleep(100);
             } catch (IOException e) {
+                // yep, saw this when I closed the other app
                 Log.d(TAG, "Input stream was disconnected", e);
                 break;
             } catch (InterruptedException e) {
@@ -79,7 +82,12 @@ public class BlueToothTalker extends Thread {
     }
 
     // Call this from the main activity to send data to the remote device.
-    public void write(byte[] bytes) {
+    public void write(String str) {
+        write(str.getBytes(StandardCharsets.UTF_8));
+
+    }
+
+    private void write(byte[] bytes) {
         Log.i(TAG, "I see us trying to WRITE "+bytes);
         try {
             mmOutStream.write(bytes);

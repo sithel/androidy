@@ -10,6 +10,7 @@ import android.os.Message;
 import android.support.annotation.LayoutRes;
 import android.support.v4.util.Pair;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -22,6 +23,7 @@ import com.six.arm.studios.miscproject1.bluetooth.BlueToothTalker;
 import com.six.arm.studios.miscproject1.interfaces.BluetoothListener;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
@@ -63,15 +65,21 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements Bluetoot
             int wi = 0;
             @Override public void handleMessage(Message msg) {
                 super.handleMessage(msg);
+                byte[] byteArray = (byte[]) msg.obj;
+                int length = msg.arg1;
+                byte[] resultArray = length == -1 ? byteArray : new byte[length];
+                for (int i = 0; i < byteArray.length && i < length; ++i) {
+                    resultArray[i] = byteArray[i];
+                }
+                String text = new String(resultArray, StandardCharsets.UTF_8);
                 if (msg.what == BlueToothTalker.MessageConstants.MESSAGE_WRITE) {
-                    Log.i(TAG, "we just wrote... "+msg.obj);
-                    Log.i(TAG, "    >>w "+Arrays.toString((byte[])msg.obj));
-                    mWriteTxt.setText(++wi +"] "+Arrays.toString((byte[])msg.obj));
+                    Log.i(TAG, "we just wrote... ["+length+"] '"+text+"'");
+                    mWriteTxt.setText(++wi +"] "+text);
                 } else if (msg.what == BlueToothTalker.MessageConstants.MESSAGE_READ) {
-                    Log.i(TAG, "we just read... "+msg.obj);
+                    Log.i(TAG, "we just read... ["+length+"] '"+text+"'");
                     Log.i(TAG, "    >>r "+Arrays.toString((byte[])msg.obj));
-                    mReadTxt.setText(++ri+"] "+Arrays.toString((byte[])msg.obj));
-                    mBluetoothStuff.mTalker.write(("I heard you : "+Math.random()+"!").getBytes());
+                    mReadTxt.setText(++ri+"] "+text);
+                    mBluetoothStuff.mTalker.write("I heard you : "+Math.random()+"!");
                 }
             }
         };
@@ -85,7 +93,7 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements Bluetoot
     @OnClick(R.id.bluetooth_write)
     public void handleWriteClick() {
         Log.i(TAG, "... am desperately trying to write something... "+Arrays.toString(new byte[]{63, 24, 100, 8, 65}));
-        mBluetoothStuff.mTalker.write(new byte[]{63, 24, 100, 8, 65});
+        mBluetoothStuff.mTalker.write("button press");
     }
 
     @Override

@@ -1,8 +1,6 @@
 package com.six.arm.studios.miscproject1.shape;
 
 import android.opengl.GLES20;
-import android.opengl.GLES31;
-import android.util.Log;
 
 import com.six.arm.studios.miscproject1.MyGLRenderer;
 
@@ -12,12 +10,6 @@ import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import rx.Observable;
-import rx.functions.Action1;
-import rx.functions.Func1;
-import rx.functions.Func2;
 
 /**
  * Created by sithel on 3/2/17.
@@ -121,26 +113,22 @@ public class NoobParticles {
         GLES20.glEnable(GLES20.GL_BLEND);
 //        GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE);     // Additive
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);     //Interpolative
-
-        Observable
-                .interval(10, TimeUnit.MILLISECONDS)
-                .flatMap(new Func1<Long, Observable<RPoint>>() {
-                    @Override
-                    public Observable<RPoint> call(final Long count) {
-                        return Observable.from(points)
-                                .map(new Func1<RPoint, RPoint>() {
-                                    @Override
-                                    public RPoint call(RPoint rPoint) {
-                                        rPoint.nudge(count);
-//                                        if (rPoint.i == 0) {
-//                                            Log.i(TAG, rPoint.toString());
-//                                        }
-                                        return rPoint;
-                                    }
-                                });
-                    }
-                })
-                .subscribe()
+//
+//        Flowable
+//                .interval(10, TimeUnit.MILLISECONDS)
+//                .flatMap((Long count) -> {
+//                         Flowable.fromArray(points)
+//                                .map((RPoint rPoint) -> {
+//                                        rPoint.nudge(count);
+////                                        if (rPoint.i == 0) {
+////                                            Log.i(TAG, rPoint.toString());
+////                                        }
+//                                        return rPoint;
+//                                    }
+//                                );
+//                    }
+//                )
+//                .subscribe()
         ;
 
     }

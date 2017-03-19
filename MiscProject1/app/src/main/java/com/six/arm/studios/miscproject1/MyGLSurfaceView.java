@@ -8,8 +8,7 @@ import android.view.MotionEvent;
 
 import java.util.concurrent.TimeUnit;
 
-import rx.Observable;
-import rx.functions.Action1;
+import io.reactivex.Flowable;
 
 /**
  * Created by sithel on 2/28/17.
@@ -48,7 +47,7 @@ class MyGLSurfaceView extends GLSurfaceView {
                     dy = dy * -1;
                 }
 
-                mRenderer.setAngle((dx* TOUCH_SCALE_FACTOR), (dy*TOUCH_SCALE_FACTOR));
+                mRenderer.setAngle((dx * TOUCH_SCALE_FACTOR), (dy * TOUCH_SCALE_FACTOR));
 //                requestRender();
                 if (mRenderer == null) {
 //                    Log.i(TAG, "wtf, null render?");
@@ -91,26 +90,22 @@ class MyGLSurfaceView extends GLSurfaceView {
 
         // Render the view only when there is a change in the drawing data
         // To allow the triangle to rotate automatically, this line is commented out:
-//        setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 
-        Observable.interval(10, TimeUnit.MICROSECONDS).subscribe(new Action1<Long>() {
-            @Override
-            public void call(Long aLong) {
-                if (mRenderer == null) {
-//                    Log.i(TAG, "wtf, null render?");
-                } else if (mRenderer.mTriangle == null) {
-//                    Log.i(TAG, "wtf, null triangle?");
-                } else {
-                    mRenderer.mTriangle.bumpTime(aLong);
-                }
-            }
-        }, new Action1<Throwable>() {
-            @Override
-            public void call(Throwable throwable) {
-                Log.e("Rebecca", "Rebecca, saw bad shet : " + throwable);
-//                requestRender();
-            }
-        });
+        this.post(this::requestRender);
+//        Flowable.interval(10, TimeUnit.MICROSECONDS).subscribe((Long aLong) -> {
+//                    if (mRenderer == null) {
+////                    Log.i(TAG, "wtf, null render?");
+//                    } else if (mRenderer.mTriangle == null) {
+////                    Log.i(TAG, "wtf, null triangle?");
+//                    } else {
+//                        mRenderer.mTriangle.bumpTime(aLong);
+//                    }
+//                }, (Throwable throwable) -> {
+//                    Log.e("Rebecca", "Rebecca, saw bad shet : " + throwable);
+////                requestRender();
+//                }
+//        );
 
     }
 }

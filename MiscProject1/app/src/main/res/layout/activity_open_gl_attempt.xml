@@ -25,14 +25,41 @@
 
         <LinearLayout
             android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <EditText
+                android:id="@+id/qset_id"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/service_ping_btn"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Ping the service!"
+                android:textColor="@color/colorPrimary"
+                android:textSize="20sp"/>
+
+            <TextView
+                android:id="@+id/server_results"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/start_looking_button"
                 android:layout_width="0dp"
-                android:layout_weight="1"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:minHeight="48dp"
                 android:text="Start looking for other devices"
                 android:textColor="@color/colorPrimary"
@@ -41,14 +68,15 @@
             <TextView
                 android:id="@+id/be_visible_button"
                 android:layout_width="0dp"
-                android:layout_weight="1"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:minHeight="48dp"
                 android:text="Be visible to other devices"
                 android:textColor="@color/colorPrimary"
                 android:textSize="20sp"/>
 
         </LinearLayout>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -57,8 +85,8 @@
             <TextView
                 android:id="@+id/bluetooth_read"
                 android:layout_width="0dp"
-                android:layout_weight="1"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:minHeight="48dp"
                 android:text="I HEARD"
                 android:textColor="@color/colorPrimary"
@@ -67,8 +95,8 @@
             <TextView
                 android:id="@+id/bluetooth_write"
                 android:layout_width="0dp"
-                android:layout_weight="1"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:minHeight="48dp"
                 android:text="I SAID"
                 android:textColor="@color/colorPrimary"

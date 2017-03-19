@@ -1,24 +1,17 @@
 package com.six.arm.studios.miscproject1;
 
 import android.content.Context;
-import android.opengl.EGLConfig;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.SystemClock;
-import android.util.Log;
 
 import com.six.arm.studios.miscproject1.shape.ImageOne;
 import com.six.arm.studios.miscproject1.shape.NoobParticles;
 import com.six.arm.studios.miscproject1.shape.Square;
 import com.six.arm.studios.miscproject1.shape.Triangle;
 
-import java.util.concurrent.TimeUnit;
-
 import javax.microedition.khronos.opengles.GL10;
-
-import rx.Observable;
-import rx.functions.Action1;
 
 /**
  * Created by sithel on 2/28/17.

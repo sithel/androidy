@@ -252,6 +252,7 @@ public class BluetoothStuff {
 
         mIsRegistered = true;
 
+        // http://stackoverflow.com/questions/33052811/since-marshmallow-update-bluetooth-discovery-using-bluetoothadapter-getdefaultad
         // TODO : check for the "nearby" permission and flip the fuck out if we don't have it
 
         // If we're already discovering, stop it

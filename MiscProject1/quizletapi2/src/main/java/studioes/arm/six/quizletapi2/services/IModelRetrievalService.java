@@ -1,7 +1,7 @@
-package studioes.arm.six.quizletapi20modelretrieval.services;
+package studioes.arm.six.quizletapi2.services;
 
 import io.reactivex.Flowable;
-import studioes.arm.six.quizletapi20modelretrieval.models.QSet;
+import studioes.arm.six.quizletapi2.models.QSet;
 
 /**
  * Created by sithel on 3/19/17.

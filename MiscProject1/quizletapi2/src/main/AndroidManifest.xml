@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="studioes.arm.six.quizletapi20modelretrieval">
+          package="studioes.arm.six.quizletapi2">
 
     <uses-permission android:name="android.permission.INTERNET" />
 

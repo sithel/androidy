@@ -1,4 +1,4 @@
-package studioes.arm.six.quizletapi20modelretrieval;
+package studioes.arm.six.quizletapi2;
 
 import org.junit.Test;
 

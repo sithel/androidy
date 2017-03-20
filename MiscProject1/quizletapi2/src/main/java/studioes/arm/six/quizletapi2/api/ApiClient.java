@@ -1,4 +1,4 @@
-package studioes.arm.six.quizletapi20modelretrieval.api;
+package studioes.arm.six.quizletapi2.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -10,7 +10,7 @@ import io.reactivex.processors.BehaviorProcessor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import studioes.arm.six.quizletapi20modelretrieval.models.QSet;
+import studioes.arm.six.quizletapi2.models.QSet;
 
 /**
  * Created by sithel on 3/18/17.

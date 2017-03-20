@@ -11,7 +11,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.support.annotation.LayoutRes;
-import android.support.v4.util.Pair;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -23,30 +22,32 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.six.arm.studios.miscproject1.bluetooth.BlueToothTalker;
-import com.six.arm.studios.miscproject1.interfaces.BluetoothListener;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import studioes.arm.six.quizletapi20modelretrieval.models.QSet;
-import studioes.arm.six.quizletapi20modelretrieval.services.IModelRetrievalService;
-import studioes.arm.six.quizletapi20modelretrieval.services.ModelRetrievalService;
+import studioes.arm.six.bluetoothbuddies.ClientService;
+import studioes.arm.six.bluetoothbuddies.IClientService;
+import studioes.arm.six.bluetoothbuddies.IServerService;
+import studioes.arm.six.bluetoothbuddies.ServerService;
+import studioes.arm.six.bluetoothbuddies.bluetooth.IBluetoothClientListener;
+import studioes.arm.six.quizletapi2.models.QSet;
+import studioes.arm.six.quizletapi2.services.IModelRetrievalService;
+import studioes.arm.six.quizletapi2.services.ModelRetrievalService;
 
-public class OpenGlAttemptActivity extends AppCompatActivity implements BluetoothListener {
+public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoothClientListener {
     @LayoutRes
     public static final int LAYOUT_ID = R.layout.activity_open_gl_attempt;
     public static final String TAG = "RebeccaActivity";
     public static final int REQUEST_ENABLE_BT = 100;
 
     @BindView(R.id.fancy_gl_surface) MyGLSurfaceView mGLView;
-    @BindView(R.id.start_looking_button) View mLookForDevicesButton;
-    @BindView(R.id.be_visible_button) View mBeVisibleButton;
+    @BindView(R.id.start_looking_button) View mPlayerButton;
+    @BindView(R.id.start_hosting_button) View mHostButton;
     @BindView(R.id.spotted_devices) LinearLayout mDeviceList;
     @BindView(R.id.bluetooth_read) TextView mReadTxt;
     @BindView(R.id.bluetooth_write) TextView mWriteTxt;
@@ -54,10 +55,13 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements Bluetoot
     @BindView(R.id.qset_id) EditText mSetId;
     @BindView(R.id.server_results) TextView mServerResults;
 
-    BluetoothStuff mBluetoothStuff;
 
-    IModelRetrievalService mService;
-    boolean mBound = false;
+    IModelRetrievalService mModelService;
+    boolean mModelBound = false;
+    IServerService mServerService;
+    boolean mServerBound = false;
+    IClientService mClientService;
+    boolean mClientBound = false;
 
 
     @Override
@@ -65,6 +69,8 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements Bluetoot
         super.onCreate(savedInstanceState);
 
         startService(ModelRetrievalService.startIntent(this, "fakeClientId"));
+        startService(ClientService.createStartIntent(this));
+        startService(ServerService.createStartIntent(this));
 
         // remove title
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -76,65 +82,60 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements Bluetoot
         ButterKnife.bind(this);
         mGLView.setPreserveEGLContextOnPause(true);
 
-        Handler handler = new Handler() {
-            int ri = 0;
-            int wi = 0;
-
-            @Override public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-                byte[] byteArray = (byte[]) msg.obj;
-                int length = msg.arg1;
-                byte[] resultArray = length == -1 ? byteArray : new byte[length];
-                for (int i = 0; i < byteArray.length && i < length; ++i) {
-                    resultArray[i] = byteArray[i];
-                }
-                String text = new String(resultArray, StandardCharsets.UTF_8);
-                if (msg.what == BlueToothTalker.MessageConstants.MESSAGE_WRITE) {
-                    Log.i(TAG, "we just wrote... [" + length + "] '" + text + "'");
-                    mWriteTxt.setText(++wi + "] " + text);
-                } else if (msg.what == BlueToothTalker.MessageConstants.MESSAGE_READ) {
-                    Log.i(TAG, "we just read... [" + length + "] '" + text + "'");
-                    Log.i(TAG, "    >>r " + Arrays.toString((byte[]) msg.obj));
-                    mReadTxt.setText(++ri + "] " + text);
-                    mBluetoothStuff.mTalker.write("I heard you : " + Math.random() + "!");
-                }
-            }
-        };
-        mBluetoothStuff = new BluetoothStuff(this, handler);
-        if (mBluetoothStuff.ensureBluetoothSetup(this)) {
-            hookUpThings();
-            return;
-        }
+        // TODO : *somebody* needs to warn about the Bluetooth not on... who?
+//        mBluetoothStuff = new BluetoothStuff(this, handler);
+//        if (mBluetoothStuff.ensureBluetoothSetup(this)) {
+//            hookUpThings();
+//            return;
+//        }
     }
 
     @OnClick(R.id.bluetooth_write)
     public void handleWriteClick() {
         Log.i(TAG, "... am desperately trying to write something... " + Arrays.toString(new byte[]{63, 24, 100, 8, 65}));
-        mBluetoothStuff.mTalker.write("button press");
+        if (mServerBound && mServerService.isConnected()) {
+            mServerService.sendMsg("button press");
+        } else if (mClientBound && mClientService.isConnected()) {
+            mClientService.sendMsg("button press");
+        }
+//        mBluetoothStuff.mTalker.write();
     }
 
     @OnClick(R.id.service_ping_btn)
     public void handleServicePing() {
-        if (!mBound) {
+        if (!mModelBound) {
             Toast.makeText(this, "wtf, y no service bound?", Toast.LENGTH_SHORT).show();
             return;
         }
         String userInput = mSetId.getText().toString();
         try {
             Long id = Long.valueOf(userInput);
-            mService.requestSet(id);
+            mModelService.requestSet(id);
         } catch (NumberFormatException e) {
             Log.d(TAG, "couldn't make a number out of " + userInput);
+        }
+    }
+    @OnClick(R.id.start_hosting_button)
+    public void handleStartHostingClick() {
+        if (mServerBound) {
+            mServerService.startHosting(this);
+        } else {
+            Log.e(TAG, "Wanted to be a Host but we're not server bound yet");
+        }
+    }
+    @OnClick(R.id.start_looking_button)
+    public void handleJoinClick() {
+        if (mClientBound) {
+            mClientService.startLooking(this);
+        } else {
+            Log.e(TAG, "Wanted to be a Player but we're not server bound yet");
         }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (mBluetoothStuff != null) {
-            mBluetoothStuff.shutShitDown(this);
-        }
-
+        // TODO : blow stuff up / shut down services? maybe? maybe not
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -147,31 +148,6 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements Bluetoot
         } else {
             Log.i(TAG, "I got back a result I've no idea what it is... Request Code: " + requestCode + ", result code " + resultCode + " :: " + data);
         }
-        hookUpThings();
-    }
-
-    public void hookUpThings() {
-        List<Pair<String, String>> pairedDevices = mBluetoothStuff.getExistingPairedDevices();
-        for (Pair<String, String> device : pairedDevices) {
-            Log.i(TAG, "I see pre-existing device info : " + device.first + " [" + device.second + "] ");
-        }
-        mBeVisibleButton.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                Log.i(TAG, "be visible...");
-                mBluetoothStuff.beVisibleToDevices(OpenGlAttemptActivity.this);
-                try {
-                    mBluetoothStuff.startAsServer(OpenGlAttemptActivity.this);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        mLookForDevicesButton.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                Log.i(TAG, "start looking...");
-                mBluetoothStuff.lookForDevices(OpenGlAttemptActivity.this);
-            }
-        });
     }
 
     @Override
@@ -204,10 +180,9 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements Bluetoot
         // TODO : note, we'll get this callback multiple times, make sure we only show items once
         TextView child = new TextView(this);
         child.setText(name + ":" + macAddress);
-        child.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                Log.i(TAG, "Totes going to do something with this now... " + macAddress);
-                mBluetoothStuff.tryToConnectToServer(OpenGlAttemptActivity.this, device);
+        child.setOnClickListener((view) -> {
+            if (mClientBound) {
+                mClientService.connectToServer(device);
             }
         });
         mDeviceList.addView(child);
@@ -220,22 +195,34 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements Bluetoot
         super.onStart();
         // Bind to LocalService
         Intent intent = new Intent(this, ModelRetrievalService.class);
-        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);   // if I only JUST bind, the service dies when we background :'(
+        // if I only JUST bind, the service dies when we background :'(
+        // TODO : inspect these flags, I bet we want a different ont
+        bindService(new Intent(this, ModelRetrievalService.class), mModelConnection, Context.BIND_AUTO_CREATE);
+        bindService(new Intent(this, ServerService.class), mServerConnection, Context.BIND_AUTO_CREATE);
+        bindService(new Intent(this, ClientService.class), mClientConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         // Unbind from the service
-        if (mBound) {
-            unbindService(mConnection);
-            mBound = false;
+        if (mModelBound) {
+            unbindService(mModelConnection);
+            mModelBound = false;
+        }
+        if (mServerBound) {
+            unbindService(mServerConnection);
+            mServerBound = false;
+        }
+        if (mClientBound) {
+            unbindService(mClientConnection);
+            mClientBound = false;
         }
     }
 
     private void hookUpServiceSubscribers() {
         Log.i(TAG, "Hooking up Service Subscribers ");
-        mService.getQSetFlowable()
+        mModelService.getQSetFlowable()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe((QSet qSet) -> mServerResults.setText(qSet.title()))
         ;
@@ -249,21 +236,65 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements Bluetoot
     /**
      * Defines callbacks for service binding, passed to bindService()
      */
-    private ServiceConnection mConnection = new ServiceConnection() {
+    private ServiceConnection mModelConnection = new ServiceConnection() {
 
         @Override
         public void onServiceConnected(ComponentName className, IBinder service) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
             ModelRetrievalService.LocalBinder binder = (ModelRetrievalService.LocalBinder) service;
-            mService = binder.getService();
+            mModelService = binder.getService();
             hookUpServiceSubscribers();
-            mBound = true;
+            mModelBound = true;
         }
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
             unhookServiceSubscribers();
-            mBound = false;
+            mModelBound = false;
+        }
+    };
+    /**
+     * Defines callbacks for service binding, passed to bindService()
+     */
+    private ServiceConnection mServerConnection = new ServiceConnection() {
+
+        int msgCount = 0;
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            ServerService.LocalBinder binder = (ServerService.LocalBinder) service;
+            mServerService = binder.getService();
+            mServerService.getMessageUpdates().subscribe((msg) -> {
+                mWriteTxt.setText(++msgCount + "] " + msg);
+            });
+            mServerBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mServerBound = false;
+        }
+    };
+    /**
+     * Defines callbacks for service binding, passed to bindService()
+     */
+    private ServiceConnection mClientConnection = new ServiceConnection() {
+
+        int msgCount = 0;
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            ClientService.LocalBinder binder = (ClientService.LocalBinder) service;
+            mClientService = binder.getService();
+            mClientService.getMessageUpdates().subscribe((msg) -> {
+                mReadTxt.setText(++msgCount + "] " + msg);
+            });
+            mClientBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mClientBound = false;
         }
     };
 }

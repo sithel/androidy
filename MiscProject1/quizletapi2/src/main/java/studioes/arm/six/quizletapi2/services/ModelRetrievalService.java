@@ -1,4 +1,4 @@
-package studioes.arm.six.quizletapi20modelretrieval.services;
+package studioes.arm.six.quizletapi2.services;
 
 import android.app.Service;
 import android.content.Context;
@@ -6,11 +6,13 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
+import android.util.LongSparseArray;
 import android.widget.Toast;
 
 import io.reactivex.Flowable;
-import studioes.arm.six.quizletapi20modelretrieval.api.ApiClient;
-import studioes.arm.six.quizletapi20modelretrieval.models.QSet;
+import io.reactivex.processors.BehaviorProcessor;
+import studioes.arm.six.quizletapi2.api.ApiClient;
+import studioes.arm.six.quizletapi2.models.QSet;
 
 /**
  * Your one-stop-shop for all data needs. You provide us your API key/credential info and we do
@@ -23,8 +25,10 @@ import studioes.arm.six.quizletapi20modelretrieval.models.QSet;
 public class ModelRetrievalService extends Service implements IModelRetrievalService {
     public static final String TAG = ModelRetrievalService.class.getSimpleName();
     private static final String CLIENT_ID_ARG = "clientIdArg";
+    private final LongSparseArray<QSet> mQSetMap = new LongSparseArray<>();
     private final ApiClient mClient = new ApiClient();
     private final IBinder mBinder = new LocalBinder();
+    private final BehaviorProcessor<QSet> mCachedQSet = BehaviorProcessor.create();
 
     public static Intent startIntent(Context context, String fakeClientId) {
         Intent intent = new Intent(context, ModelRetrievalService.class);
@@ -46,11 +50,13 @@ public class ModelRetrievalService extends Service implements IModelRetrievalSer
     @Override public void onCreate() {
         super.onCreate();
         Log.i(TAG, Thread.currentThread().getName() + "] I see us trying to create... lets only do this once, ok?");
+        mClient.getQSetFlowable().subscribe((qSet) -> mQSetMap.put(qSet.id(), qSet));
     }
 
     @Override public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent == null) {
             Log.i(TAG, Thread.currentThread().getName() + "] I have a null intent... maybe I should seriously think about shutting down? (flags ["+flags+"], startId ["+startId+"])");
+            // TODO : consider killing service right now
             return START_STICKY;
         }
         Log.i(TAG, Thread.currentThread().getName() + "] I see us trying to start w/ client id (flags ["+flags+"], startId ["+startId+"]) : " + intent.getStringExtra(CLIENT_ID_ARG));
@@ -65,35 +71,36 @@ public class ModelRetrievalService extends Service implements IModelRetrievalSer
 
     @Override public boolean onUnbind(Intent intent) {
         Log.i(TAG, Thread.currentThread().getName() + "] I see an onUNbind request : "+intent);
-//        return super.onUnbind(intent);
+        // TODO : start countdown timer to shut down service
         return true;
     }
 
     @Override public void onRebind(Intent intent) {
         Log.i(TAG, Thread.currentThread().getName() + "] I see an onREbind request : "+intent);
+        // TODO : stop countdown timer, keep service
         super.onRebind(intent);
     }
 
     @Override
     public void onDestroy() {
-        Toast.makeText(this, "ModelRetrievalService done", Toast.LENGTH_SHORT).show();
+        super.onDestroy();
+        Toast.makeText(this, TAG + " done", Toast.LENGTH_SHORT).show();
     }
 
     //region interface methods
 
     @Override public Flowable<QSet> getQSetFlowable() {
         // in theory I would own this observable and select between my cache and the API to find it
-        return mClient.getQSetFlowable();
+        return Flowable.merge(mCachedQSet, mClient.getQSetFlowable());
     }
 
     @Override public void requestSet(final long setId) {
-        Runnable runnable = new Runnable() {
-            @Override public void run() {
-                mClient.fetchSet(setId);
-            }
-        };
-        new Thread(runnable).start();
-
+        QSet cachedSet = mQSetMap.get(setId);
+        if (cachedSet != null) {
+            mCachedQSet.onNext(cachedSet);
+        } else {
+            new Thread(() -> mClient.fetchSet(setId)).start();
+        }
     }
 
     //endregion

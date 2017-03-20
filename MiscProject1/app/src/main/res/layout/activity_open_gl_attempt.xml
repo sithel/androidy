@@ -31,6 +31,7 @@
                 android:id="@+id/qset_id"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:inputType="number"
                 android:layout_weight="1"/>
 
             <TextView
@@ -61,17 +62,17 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:minHeight="48dp"
-                android:text="Start looking for other devices"
+                android:text="Look for a Host"
                 android:textColor="@color/colorPrimary"
                 android:textSize="20sp"/>
 
             <TextView
-                android:id="@+id/be_visible_button"
+                android:id="@+id/start_hosting_button"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:minHeight="48dp"
-                android:text="Be visible to other devices"
+                android:text="Be a Host"
                 android:textColor="@color/colorPrimary"
                 android:textSize="20sp"/>
 
@@ -88,7 +89,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:minHeight="48dp"
-                android:text="I HEARD"
+                android:text="Client says"
                 android:textColor="@color/colorPrimary"
                 android:textSize="20sp"/>
 
@@ -98,7 +99,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:minHeight="48dp"
-                android:text="I SAID"
+                android:text="Server says"
                 android:textColor="@color/colorPrimary"
                 android:textSize="20sp"/>
 

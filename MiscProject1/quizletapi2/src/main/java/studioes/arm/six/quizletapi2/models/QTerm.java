@@ -1,4 +1,4 @@
-package studioes.arm.six.quizletapi20modelretrieval.models;
+package studioes.arm.six.quizletapi2.models;
 
 import android.support.annotation.Nullable;
 

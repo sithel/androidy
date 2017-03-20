@@ -1,15 +1,15 @@
-package studioes.arm.six.quizletapi20modelretrieval.api;
+package studioes.arm.six.quizletapi2.api;
 
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import studioes.arm.six.quizletapi20modelretrieval.models.ImmutableQSet;
-import studioes.arm.six.quizletapi20modelretrieval.models.ImmutableQTerm;
-import studioes.arm.six.quizletapi20modelretrieval.models.ImmutableQUser;
-import studioes.arm.six.quizletapi20modelretrieval.models.QSet;
-import studioes.arm.six.quizletapi20modelretrieval.models.QTerm;
+import studioes.arm.six.quizletapi2.models.ImmutableQSet;
+import studioes.arm.six.quizletapi2.models.ImmutableQTerm;
+import studioes.arm.six.quizletapi2.models.ImmutableQUser;
+import studioes.arm.six.quizletapi2.models.QSet;
+import studioes.arm.six.quizletapi2.models.QTerm;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;

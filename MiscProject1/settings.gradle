@@ -1,1 +1,1 @@
-include ':app', ':quizletapi2'
+include ':app', ':quizletapi2', ':bluetoothbuddies'

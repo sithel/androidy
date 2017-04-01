@@ -78,6 +78,8 @@ public class ServerService extends Service implements IServerService {
         }
     }
 
+
+
     private Handler getHandler() {
         return new Handler() {
 //            int ri = 0;
@@ -116,8 +118,10 @@ public class ServerService extends Service implements IServerService {
         if (mBluetoothStuff == null) {
             mBluetoothStuff = new BluetoothStuff(listener, getHandler());
         }
-        mBluetoothStuff.ensureBluetoothSetup(this);
-        mBluetoothStuff.beVisibleToDevices(this);
+        if (!mBluetoothStuff.ensureBluetoothSetup(this)) {
+            return;
+        }
+        mBluetoothStuff.beVisibleToDevices(listener);
         try {
             mBluetoothStuff.startAsServer(this);
         } catch (IOException e) {

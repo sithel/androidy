@@ -115,7 +115,9 @@ public class ClientService extends Service implements IClientService {
         if (mBluetoothStuff == null) {
             mBluetoothStuff = new BluetoothStuff(listener, getHandler());
         }
-        mBluetoothStuff.ensureBluetoothSetup(this);
+        if (!mBluetoothStuff.ensureBluetoothSetup(this)) {
+            return;
+        }
         mBluetoothStuff.lookForDevices(this);
     }
 

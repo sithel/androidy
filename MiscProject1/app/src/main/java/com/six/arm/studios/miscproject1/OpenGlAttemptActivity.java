@@ -6,10 +6,12 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.LayoutRes;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -21,10 +23,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import studioes.arm.six.bluetoothbuddies.ClientService;
 import studioes.arm.six.bluetoothbuddies.IClientService;
@@ -43,13 +47,15 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
     public static final int LAYOUT_ID = R.layout.activity_open_gl_attempt;
     public static final String TAG = "RebeccaActivity";
     public static final int REQUEST_ENABLE_BT = 100;
+    public static final int REQUEST_DISCOVERABLE_CODE = 42;
+    public static final int REQUEST_PERMISSIONS_CODE = 666;
 
     @BindView(R.id.dummy_view) View mDummyView;
     @BindView(R.id.fancy_gl_surface) MyGLSurfaceView mGLView;
     @BindView(R.id.base_gl_surface) GLSurfaceView mBaseGlView;
     @BindView(R.id.text_to_render_3d) IRenderableView mRenderableView;
-    @BindView(R.id.start_looking_button) View mPlayerButton;
-    @BindView(R.id.start_hosting_button) View mHostButton;
+    @BindView(R.id.start_looking_button) TextView mPlayerButton;
+    @BindView(R.id.start_hosting_button) TextView mHostButton;
     @BindView(R.id.spotted_devices) LinearLayout mDeviceList;
     @BindView(R.id.bluetooth_read) TextView mReadTxt;
     @BindView(R.id.bluetooth_write) TextView mWriteTxt;
@@ -108,7 +114,6 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
         } else if (mClientBound && mClientService.isConnected()) {
             mClientService.sendMsg("button press");
         }
-//        mBluetoothStuff.mTalker.write();
     }
 
     @OnClick(R.id.service_ping_btn)
@@ -125,6 +130,7 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
             Log.d(TAG, "couldn't make a number out of " + userInput);
         }
     }
+
     @OnClick(R.id.start_hosting_button)
     public void handleStartHostingClick() {
         if (mServerBound) {
@@ -133,6 +139,7 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
             Log.e(TAG, "Wanted to be a Host but we're not server bound yet");
         }
     }
+
     @OnClick(R.id.start_looking_button)
     public void handleJoinClick() {
         if (mClientBound) {
@@ -151,12 +158,50 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ENABLE_BT && resultCode == Activity.RESULT_CANCELED) {
-            Toast.makeText(this, "Well fuck you too", Toast.LENGTH_LONG).show();
-            return;
+            Toast.makeText(this, "Well fuck you too, bluetooth is only the core of everything here", Toast.LENGTH_LONG).show();
         } else if (requestCode == REQUEST_ENABLE_BT && resultCode == Activity.RESULT_OK) {
             Log.i(TAG, "User approved BlueTooth on...");
+        } else if (requestCode == REQUEST_DISCOVERABLE_CODE) {
+            if (resultCode <= 0) {
+                Toast.makeText(this, "Well fuck you too, we didn't want you to host", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(this, "Discoverable mode enabled. " + resultCode + " seconds", Toast.LENGTH_SHORT).show();
+                mHostButton.setTextColor(ContextCompat.getColor(this, R.color.textColor));
+                mHostButton.setText("HOSTING...");
+                Observable.timer(resultCode, TimeUnit.SECONDS)
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe((t) -> {
+                            if (mHostButton == null) {
+                                return;
+                            }
+                            mHostButton.setText("Be a Host");
+                            mHostButton.setTextColor(ContextCompat.getColor(this, R.color.colorPrimary));
+                        });
+            }
         } else {
-            Log.i(TAG, "I got back a result I've no idea what it is... Request Code: " + requestCode + ", result code " + resultCode + " :: " + data);
+            Log.w(TAG, "I got back a result I've no idea what it is... Request Code: " + requestCode + ", result code " + resultCode + " :: " + data);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_PERMISSIONS_CODE:
+                if (grantResults.length > 0) {
+                    for (int gr : grantResults) {
+                        // Check if request is granted or not
+                        if (gr != PackageManager.PERMISSION_GRANTED) {
+                            Toast.makeText(this, "What, you wont give me my permissions? fuck you!", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                    }
+
+                    //TODO - Add your code here to start Discovery
+
+                }
+                break;
+            default:
+                return;
         }
     }
 
@@ -183,6 +228,20 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
         addNewDeviceUI(deviceName, deviceHardwareAddress, device);
     }
 
+    @Override public void requestDiscoverabilityIntent(Intent intent) {
+        Log.i(TAG, "About to start the discoverable intent...");
+        startActivityForResult(intent, REQUEST_DISCOVERABLE_CODE);
+    }
+
+    @Override public void isDiscoverable(boolean isDiscoverable) {
+        mPlayerButton.setTextColor(ContextCompat.getColor(this, isDiscoverable ? R.color.textColor : R.color.colorPrimary));
+        mPlayerButton.setText(isDiscoverable ? "LOOKING.... " : "Look for a Host");
+    }
+
+    @Override public void requestPermission(String[] requestedPermissions) {
+        requestPermissions(requestedPermissions, REQUEST_PERMISSIONS_CODE);
+    }
+
     //endregion
 
     //region private helper methods
@@ -203,8 +262,6 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
     @Override
     protected void onStart() {
         super.onStart();
-        // Bind to LocalService
-        Intent intent = new Intent(this, ModelRetrievalService.class);
         // if I only JUST bind, the service dies when we background :'(
         // TODO : inspect these flags, I bet we want a different ont
         bindService(new Intent(this, ModelRetrievalService.class), mModelConnection, Context.BIND_AUTO_CREATE);
@@ -243,7 +300,6 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
 
     private void unhookServiceSubscribers() {
         Log.i(TAG, "UN hooking service subscribers");
-
     }
 
     /**
@@ -272,6 +328,7 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
     private ServiceConnection mServerConnection = new ServiceConnection() {
 
         int msgCount = 0;
+
         @Override
         public void onServiceConnected(ComponentName className, IBinder service) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
@@ -294,6 +351,7 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
     private ServiceConnection mClientConnection = new ServiceConnection() {
 
         int msgCount = 0;
+
         @Override
         public void onServiceConnected(ComponentName className, IBinder service) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance

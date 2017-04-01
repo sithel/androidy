@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.support.v4.util.Pair;
 import android.util.Log;
@@ -56,8 +57,10 @@ public class BluetoothStuff {
                 Log.i(TAG, "Totes just got an update about " + deviceName + " [" + deviceHardwareAddress + "]");
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
                 Log.i(TAG, "Done with discovery... :(  ");
+                mMyListener.isDiscoverable(false);
             } else if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)) {
                 Log.i(TAG, "We're starting... fingers crossed");
+                mMyListener.isDiscoverable(true);
             } else {
                 Log.i(TAG, "... what is this?? " + action);
             }
@@ -78,6 +81,10 @@ public class BluetoothStuff {
             Log.e(TAG, "Bluetooth not enabled, no go!");
 //            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
 //            context.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+            return false;
+        }
+        if (!verifyPermission(context, mMyListener)) {
+            Log.e(TAG, "Missing permissions, no go!");
             return false;
         }
         return true;
@@ -107,12 +114,11 @@ public class BluetoothStuff {
         }
     }
 
-    public void beVisibleToDevices(Context context) {
+    public void beVisibleToDevices(IBluetoothClientListener listener) {
         Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, DISCOVERABLE_DURATION_S);
-        Log.i(TAG, "About to start the descoverablility intent...");
-        discoverableIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(discoverableIntent);
+//        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, DISCOVERABLE_DURATION_S);
+//        discoverableIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        listener.requestDiscoverabilityIntent(discoverableIntent);
     }
 
     public void tryToConnectToServer(Context context, BluetoothDevice device) {
@@ -261,5 +267,29 @@ public class BluetoothStuff {
 
         // Request discover from BluetoothAdapter
         Log.i(TAG, "Just kicked off startDiscovery: " + mBluetoothAdapter.startDiscovery());
+    }
+
+    /**
+     * @return true if the app has all the permissions it needs. Otherwise it'll be hassling the
+     * listener via {@link IBluetoothClientListener#requestPermission(String[])}
+     */
+    public boolean verifyPermission(Context context, IBluetoothClientListener listener) {
+        int accessCoarseLocation = context.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION);
+//            int accessFineLocation   = context.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION);
+
+        List<String> listRequestPermission = new ArrayList<String>();
+
+        if (accessCoarseLocation != PackageManager.PERMISSION_GRANTED) {
+            listRequestPermission.add(android.Manifest.permission.ACCESS_COARSE_LOCATION);
+        }
+//            if (accessFineLocation != PackageManager.PERMISSION_GRANTED) {
+//                listRequestPermission.add(android.Manifest.permission.ACCESS_FINE_LOCATION);
+//            }
+
+        if (!listRequestPermission.isEmpty()) {
+            String[] strRequestPermission = listRequestPermission.toArray(new String[listRequestPermission.size()]);
+            listener.requestPermission(strRequestPermission);
+        }
+        return listRequestPermission.isEmpty();
     }
 }

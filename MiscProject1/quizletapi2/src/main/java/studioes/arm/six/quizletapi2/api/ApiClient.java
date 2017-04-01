@@ -15,7 +15,8 @@ import okhttp3.Response;
 import studioes.arm.six.quizletapi2.models.QSet;
 
 /**
- * Created by sithel on 3/18/17.
+ * This is the Service-private portion that actually makes the Quizlset specific calls and
+ * transforms the JSON results into our usable Q* immutables
  */
 
 public class ApiClient {
@@ -30,8 +31,11 @@ public class ApiClient {
                 .build();
         try {
             try (Response response = client.newCall(request).execute()) {
-                if (response != null && response.body() != null && response.body().string() != null) {
-                    mQSetProcessor.onNext(convertResponseToQSet(response.body().string()));
+                Log.v(TAG, "Response from server : "+response);
+                if (response != null && response.body() != null) {
+                    String jsonResponse = response.body().string();
+                    QSet qset = convertResponseToQSet(jsonResponse);
+                    mQSetProcessor.onNext(qset);
                 } else {
                     Log.e(TAG, "Error encountered trying to load set "+setId+" : "+response);
                 }
@@ -46,6 +50,7 @@ public class ApiClient {
         try {
             return new ObjectMapper().readValue(response, QSet.class);
         } catch (IOException e) {
+            Log.e(TAG, "Failed to convert response to QSet "+response);
             e.printStackTrace();
         }
         return null;

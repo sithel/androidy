@@ -9,18 +9,36 @@
     <com.six.arm.studios.miscproject1.MyGLSurfaceView
         android:id="@+id/fancy_gl_surface"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="400dp"
+        android:layout_alignParentTop="true"/>
+
+    <android.opengl.GLSurfaceView
+        android:id="@+id/base_gl_surface"
+        android:layout_width="match_parent"
+        android:layout_height="800dp"
+        android:layout_alignParentBottom="true"/>
+
+    <studioes.arm.six.graphics3d.text.RenderableTextView
+        android:id="@+id/text_to_render_3d"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/textColor"
+        android:text="sharks! monkies?\nwinter\nsummer\nhello world"
+        android:textSize="40sp"
+        android:textColor="@color/colorAccent"/>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
         android:orientation="vertical">
 
         <TextView
+            android:id="@+id/dummy_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Hello World!"
-            android:textColor="@color/colorPrimary"
+            android:textColor="@color/textColor"
             android:textSize="20sp"/>
 
         <LinearLayout
@@ -31,8 +49,8 @@
                 android:id="@+id/qset_id"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:inputType="number"
-                android:layout_weight="1"/>
+                android:layout_weight="1"
+                android:inputType="number"/>
 
             <TextView
                 android:id="@+id/service_ping_btn"

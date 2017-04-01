@@ -6,10 +6,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.support.annotation.LayoutRes;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -21,9 +20,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.six.arm.studios.miscproject1.bluetooth.BlueToothTalker;
-
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import butterknife.BindView;
@@ -35,6 +31,9 @@ import studioes.arm.six.bluetoothbuddies.IClientService;
 import studioes.arm.six.bluetoothbuddies.IServerService;
 import studioes.arm.six.bluetoothbuddies.ServerService;
 import studioes.arm.six.bluetoothbuddies.bluetooth.IBluetoothClientListener;
+import studioes.arm.six.graphics3d.text.CubeThing;
+import studioes.arm.six.graphics3d.text.IRenderableView;
+import studioes.arm.six.graphics3d.text.TextSurfaceRenderer;
 import studioes.arm.six.quizletapi2.models.QSet;
 import studioes.arm.six.quizletapi2.services.IModelRetrievalService;
 import studioes.arm.six.quizletapi2.services.ModelRetrievalService;
@@ -45,7 +44,10 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
     public static final String TAG = "RebeccaActivity";
     public static final int REQUEST_ENABLE_BT = 100;
 
+    @BindView(R.id.dummy_view) View mDummyView;
     @BindView(R.id.fancy_gl_surface) MyGLSurfaceView mGLView;
+    @BindView(R.id.base_gl_surface) GLSurfaceView mBaseGlView;
+    @BindView(R.id.text_to_render_3d) IRenderableView mRenderableView;
     @BindView(R.id.start_looking_button) View mPlayerButton;
     @BindView(R.id.start_hosting_button) View mHostButton;
     @BindView(R.id.spotted_devices) LinearLayout mDeviceList;
@@ -62,6 +64,8 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
     boolean mServerBound = false;
     IClientService mClientService;
     boolean mClientBound = false;
+
+    TextSurfaceRenderer mTextRenderer;
 
 
     @Override
@@ -80,7 +84,13 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
         View v = getLayoutInflater().inflate(LAYOUT_ID, null);
         setContentView(v);
         ButterKnife.bind(this);
+
         mGLView.setPreserveEGLContextOnPause(true);
+
+        mTextRenderer = new CubeThing(this);
+        mRenderableView.setTextRenderer(mTextRenderer);
+        mBaseGlView.setEGLContextClientVersion(3);
+        mBaseGlView.setRenderer(mTextRenderer);
 
         // TODO : *somebody* needs to warn about the Bluetooth not on... who?
 //        mBluetoothStuff = new BluetoothStuff(this, handler);
@@ -224,7 +234,10 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
         Log.i(TAG, "Hooking up Service Subscribers ");
         mModelService.getQSetFlowable()
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe((QSet qSet) -> mServerResults.setText(qSet.title()))
+                .subscribe((QSet qSet) -> {
+                    mServerResults.setText(qSet.title());
+                    mRenderableView.setText(qSet.title());
+                })
         ;
     }
 

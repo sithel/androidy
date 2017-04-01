@@ -1,5 +1,7 @@
 package studioes.arm.six.quizletapi2.api;
 
+import android.util.Log;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -17,6 +19,7 @@ import studioes.arm.six.quizletapi2.models.QSet;
  */
 
 public class ApiClient {
+    public static final String TAG = ApiClient.class.getSimpleName();
     private static final String SET_URL = "https://api.quizlet.com/2.0/sets/%d?client_id=BcpDSe7sYr";
     private OkHttpClient client = new OkHttpClient();
     private final BehaviorProcessor<QSet> mQSetProcessor = BehaviorProcessor.create();
@@ -27,7 +30,11 @@ public class ApiClient {
                 .build();
         try {
             try (Response response = client.newCall(request).execute()) {
-                mQSetProcessor.onNext(convertResponseToQSet(response.body().string()));
+                if (response != null && response.body() != null && response.body().string() != null) {
+                    mQSetProcessor.onNext(convertResponseToQSet(response.body().string()));
+                } else {
+                    Log.e(TAG, "Error encountered trying to load set "+setId+" : "+response);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();

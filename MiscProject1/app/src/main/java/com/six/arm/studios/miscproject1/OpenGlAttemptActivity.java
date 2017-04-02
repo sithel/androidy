@@ -10,6 +10,8 @@ import android.content.pm.PackageManager;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.support.annotation.LayoutRes;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -23,6 +25,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Arrays;
+import java.util.Locale;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
@@ -286,12 +290,47 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
             mClientBound = false;
         }
     }
+    TextToSpeech ttobj;
 
     private void hookUpServiceSubscribers() {
+        if (ttobj == null) {
+            ttobj = new TextToSpeech(this, status -> {
+
+                Log.w(TAG, "I totes just inited this TTS object");
+                Log.i(TAG, "delayed - available langs "+ ttobj.getAvailableLanguages());
+                Log.i(TAG, "delayed - available engines "+ ttobj.getEngines());
+                Log.i(TAG, "delayed - available voices "+ ttobj.getVoices());
+                Log.i(TAG, "delayed - available default engine "+ ttobj.getDefaultEngine());
+                Log.i(TAG, "delayed - available default voice "+ ttobj.getDefaultVoice());
+                Log.i(TAG, "delayed - max speech input length "+ ttobj.getMaxSpeechInputLength());
+            });
+            Log.i(TAG, "available langs "+ ttobj.getAvailableLanguages());
+            Log.i(TAG, "available engines "+ ttobj.getEngines());
+            Log.i(TAG, "available voices "+ ttobj.getVoices());
+            Log.i(TAG, "available default engine "+ ttobj.getDefaultEngine());
+            Log.i(TAG, "available default voice "+ ttobj.getDefaultVoice());
+        }
+        ttobj.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+            @Override public void onStart(String utteranceId) {
+                Log.i(TAG, "starting utterance : "+utteranceId);
+            }
+
+            @Override public void onDone(String utteranceId) {
+                Log.i(TAG, "finishing utterance : "+utteranceId);
+            }
+
+            @Override public void onError(String utteranceId) {
+                Log.i(TAG, "erroring on utterance : "+utteranceId);
+            }
+        });
         Log.i(TAG, "Hooking up Service Subscribers ");
         mModelService.getQSetFlowable()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe((QSet qSet) -> {
+                    ttobj.setLanguage(Locale.UK);
+//                    ttobj.speak("sharks", TextToSpeech.QUEUE_FLUSH, null);
+                    int result = ttobj.speak("sharks", TextToSpeech.QUEUE_ADD, null, UUID.randomUUID().toString());
+                    Log.i(TAG, "We just tried to TTS and got : "+result);
                     mServerResults.setText(qSet.title());
                     mRenderableView.setText(qSet.title());
                 })

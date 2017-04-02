@@ -14,20 +14,31 @@ import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.support.annotation.LayoutRes;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.vr.sdk.audio.GvrAudioEngine;
+import com.google.vr.sdk.base.AndroidCompat;
+import com.google.vr.sdk.base.Eye;
+import com.google.vr.sdk.base.GvrActivity;
+import com.google.vr.sdk.base.GvrView;
+import com.google.vr.sdk.base.HeadTransform;
+import com.google.vr.sdk.base.Viewport;
+
+import java.io.File;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
+import javax.microedition.khronos.egl.EGLConfig;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -46,7 +57,7 @@ import studioes.arm.six.quizletapi2.models.QSet;
 import studioes.arm.six.quizletapi2.services.IModelRetrievalService;
 import studioes.arm.six.quizletapi2.services.ModelRetrievalService;
 
-public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoothClientListener {
+public class OpenGlAttemptActivity  extends GvrActivity implements GvrView.StereoRenderer, IBluetoothClientListener {
     @LayoutRes
     public static final int LAYOUT_ID = R.layout.activity_open_gl_attempt;
     public static final String TAG = "RebeccaActivity";
@@ -63,6 +74,7 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
     @BindView(R.id.spotted_devices) LinearLayout mDeviceList;
     @BindView(R.id.bluetooth_read) TextView mReadTxt;
     @BindView(R.id.bluetooth_write) TextView mWriteTxt;
+    @BindView(R.id.debug_vector) TextView mDebugVectorText;
 
     @BindView(R.id.qset_id) EditText mSetId;
     @BindView(R.id.server_results) TextView mServerResults;
@@ -81,6 +93,7 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
 
         startService(ModelRetrievalService.startIntent(this, "fakeClientId"));
         startService(ClientService.createStartIntent(this));
@@ -101,6 +114,9 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
         mRenderableView.setTextRenderer(mTextRenderer);
         mBaseGlView.setEGLContextClientVersion(3);
         mBaseGlView.setRenderer(mTextRenderer);
+
+        initializeGvrView();
+        initializeGvrAudio();
 
         // TODO : *somebody* needs to warn about the Bluetooth not on... who?
 //        mBluetoothStuff = new BluetoothStuff(this, handler);
@@ -248,6 +264,152 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
 
     //endregion
 
+    //region Cardboard stuff...
+    int debugVectorId = 0;
+    public void onRadioButtonClicked(View view) {
+        // Is the button now checked?
+        boolean checked = ((RadioButton) view).isChecked();
+
+        // Check which radio button was clicked
+        switch(view.getId()) {
+            case R.id.vector_forward:
+                if (checked)
+                    debugVectorId = R.id.vector_forward;
+                    break;
+            case R.id.vector_quat:
+                if (checked)
+                    debugVectorId = R.id.vector_quat;
+                    break;
+            case R.id.vector_right:
+                if (checked)
+                    debugVectorId = R.id.vector_right;
+                    break;
+            case R.id.vector_trans:
+                if (checked)
+                    debugVectorId = R.id.vector_trans;
+                    break;
+            case R.id.vector_up:
+                if (checked)
+                    debugVectorId = R.id.vector_up;
+                    break;
+        }
+    }
+
+    @Override public void onNewFrame(HeadTransform headTransform) {
+
+        // Update the 3d audio engine with the most recent head rotation.
+        float[] headRotation = new float[4];
+        headTransform.getQuaternion(headRotation, 0);
+        gvrAudioEngine.setHeadRotation(
+                headRotation[0], headRotation[1], headRotation[2], headRotation[3]);
+        // Regular update call to GVR audio engine.
+        gvrAudioEngine.update();
+
+        /*
+        Log.i(TAG, "on new frame "+ headTransform);
+        float[] f = new float[4];
+        headTransform.getForwardVector(f, 0);
+        Log.i(TAG, "> We see for forward vector "+f[0]+", "+f[1]+", "+f[2]+", "+f[3]);
+        f = new float[4];
+        headTransform.getQuaternion(f, 0);
+        Log.i(TAG, "> We see quaternion "+f[0]+", "+f[1]+", "+f[2]+", "+f[3]);
+        f = new float[4];
+        headTransform.getRightVector(f, 0);
+        Log.i(TAG, "> We see right vector "+f[0]+", "+f[1]+", "+f[2]+", "+f[3]);
+        f = new float[4];
+        headTransform.getTranslation(f, 0);
+        Log.i(TAG, "> We see translation vector "+f[0]+", "+f[1]+", "+f[2]+", "+f[3]);
+        f = new float[4];
+        headTransform.getUpVector(f, 0);
+        Log.i(TAG, "> We see up vector "+f[0]+", "+f[1]+", "+f[2]+", "+f[3]);
+        */
+        Observable
+                .just(10)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe((v) ->{
+                    if (debugVectorId == R.id.vector_forward) {
+                        float[] f = new float[4];
+                        headTransform.getForwardVector(f, 0);
+                        mDebugVectorText.setText(String.format(Locale.ENGLISH, "%.2f  %.2f  %.2f  %.2f", f[0], f[1], f[2], f[3]));
+                    } else if (debugVectorId == R.id.vector_up) {
+                        float[] f = new float[4];
+                        headTransform.getUpVector(f, 0);
+                        mDebugVectorText.setText(String.format(Locale.ENGLISH, "%.2f  %.2f  %.2f  %.2f", f[0], f[1], f[2], f[3]));
+                    } else if (debugVectorId == R.id.vector_quat) {
+                        float[] f = new float[4];
+                        headTransform.getQuaternion(f, 0);
+                        mDebugVectorText.setText(String.format(Locale.ENGLISH, "%.2f  %.2f  %.2f  %.2f", f[0], f[1], f[2], f[3]));
+                    } else if (debugVectorId == R.id.vector_right) {
+                        float[] f = new float[4];
+                        headTransform.getRightVector(f, 0);
+                        mDebugVectorText.setText(String.format(Locale.ENGLISH, "%.2f  %.2f  %.2f  %.2f", f[0], f[1], f[2], f[3]));
+                    } else if (debugVectorId == R.id.vector_trans) {
+                        float[] f = new float[4];
+                        headTransform.getTranslation(f, 0);
+                        mDebugVectorText.setText(String.format(Locale.ENGLISH, "%.2f  %.2f  %.2f  %.2f", f[0], f[1], f[2], f[3]));
+                    }
+                }, (e) -> Log.e(TAG, "Error trying to something something : "+e));
+    }
+
+    @Override public void onDrawEye(Eye eye) {
+//        Log.i(TAG, "on Draw Eye "+eye);
+        // ex : on Draw Eye com.google.vr.sdk.base.Eye@468e03a
+    }
+
+    @Override public void onFinishFrame(Viewport viewport) {
+//        Log.i(TAG, "on finished frame " +viewport);
+        /* ex: on finished frame {
+                         x: 0,
+                         y: 0,
+                         width: 1920,
+                         height: 1080,
+                       }
+         */
+    }
+
+    @Override public void onSurfaceChanged(int i, int i1) {
+        Log.i(TAG, "on surface changed "+i+" : "+i1);
+    }
+
+    @Override public void onSurfaceCreated(EGLConfig eglConfig) {
+        Log.i(TAG, "on surface created "+eglConfig);
+    }
+
+    @Override public void onRendererShutdown() {
+        Log.i(TAG, "on renderer shutdown");
+    }
+
+
+
+    private GvrAudioEngine gvrAudioEngine;
+    public void initializeGvrAudio() {
+        // Initialize 3D audio engine.
+        gvrAudioEngine = new GvrAudioEngine(this, GvrAudioEngine.RenderingMode.BINAURAL_HIGH_QUALITY);
+    }
+
+    public void initializeGvrView() {
+        GvrView gvrView = (GvrView) findViewById(R.id.gvr_view);
+        gvrView.setEGLConfigChooser(8, 8, 8, 8, 16, 8);
+
+        gvrView.setRenderer(this);
+        gvrView.setTransitionViewEnabled(true);
+
+        // Enable Cardboard-trigger feedback with Daydream headsets. This is a simple way of supporting
+        // Daydream controller input for basic interactions using the existing Cardboard trigger API.
+        gvrView.enableCardboardTriggerEmulation();
+
+        if (gvrView.setAsyncReprojectionEnabled(true)) {
+            // Async reprojection decouples the app framerate from the display framerate,
+            // allowing immersive interaction even at the throttled clockrates set by
+            // sustained performance mode.
+            AndroidCompat.setSustainedPerformanceMode(this, true);
+        }
+
+        setGvrView(gvrView);
+    }
+
+    //endregion
+
     //region private helper methods
     private void addNewDeviceUI(String name, final String macAddress, final BluetoothDevice device) {
         // TODO : note, we'll get this callback multiple times, make sure we only show items once
@@ -304,11 +466,6 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
                 Log.i(TAG, "delayed - available default voice "+ ttobj.getDefaultVoice());
                 Log.i(TAG, "delayed - max speech input length "+ ttobj.getMaxSpeechInputLength());
             });
-            Log.i(TAG, "available langs "+ ttobj.getAvailableLanguages());
-            Log.i(TAG, "available engines "+ ttobj.getEngines());
-            Log.i(TAG, "available voices "+ ttobj.getVoices());
-            Log.i(TAG, "available default engine "+ ttobj.getDefaultEngine());
-            Log.i(TAG, "available default voice "+ ttobj.getDefaultVoice());
         }
         ttobj.setOnUtteranceProgressListener(new UtteranceProgressListener() {
             @Override public void onStart(String utteranceId) {
@@ -317,6 +474,16 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
 
             @Override public void onDone(String utteranceId) {
                 Log.i(TAG, "finishing utterance : "+utteranceId);
+
+                if (utteranceId.equals("sharkString") && sourceId == GvrAudioEngine.INVALID_ID) {
+                    gvrAudioEngine.preloadSoundFile(OBJECT_SOUND_FILE);
+                    sourceId = gvrAudioEngine.createSoundObject(OBJECT_SOUND_FILE);
+                    gvrAudioEngine.setSoundObjectPosition(
+                            sourceId, 10, 0, 0);
+                    gvrAudioEngine.playSound(sourceId, true /* looped playback */);
+                    // Preload an unspatialized sound to be played on a successful trigger on the cube.
+//                    gvrAudioEngine.preloadSoundFile(SUCCESS_SOUND_FILE);
+                }
             }
 
             @Override public void onError(String utteranceId) {
@@ -329,13 +496,23 @@ public class OpenGlAttemptActivity extends AppCompatActivity implements IBluetoo
                 .subscribe((QSet qSet) -> {
                     ttobj.setLanguage(Locale.UK);
 //                    ttobj.speak("sharks", TextToSpeech.QUEUE_FLUSH, null);
+                    File outputDir = this.getCacheDir(); // context being the Activity pointer
+                    File audioFile = File.createTempFile("prefix", "extension", outputDir);
+                    OBJECT_SOUND_FILE = audioFile.getAbsolutePath();
+
+//                    audioFile = new File(OBJECT_SOUND_FILE);
+//                    audioFile.createNewFile();
                     int result = ttobj.speak("sharks", TextToSpeech.QUEUE_ADD, null, UUID.randomUUID().toString());
+                    ttobj.synthesizeToFile("The quick brown fox jumped over the lazy dog.", null, audioFile, "sharkString");
                     Log.i(TAG, "We just tried to TTS and got : "+result);
                     mServerResults.setText(qSet.title());
                     mRenderableView.setText(qSet.title());
                 })
         ;
     }
+
+    public String OBJECT_SOUND_FILE;
+    private volatile int sourceId = GvrAudioEngine.INVALID_ID;
 
     private void unhookServiceSubscribers() {
         Log.i(TAG, "UN hooking service subscribers");

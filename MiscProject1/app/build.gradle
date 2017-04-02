@@ -50,6 +50,10 @@ dependencies {
     compile project(path: ':quizletapi2')
     compile project(path: ':bluetoothbuddies')
     compile project(path: ':graphics3d')
+
+
+    compile 'com.google.vr:sdk-audio:1.40.0'
+    compile 'com.google.vr:sdk-base:1.40.0'
 }
 
 retrolambda {

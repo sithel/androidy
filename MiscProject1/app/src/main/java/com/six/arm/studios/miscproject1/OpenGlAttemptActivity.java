@@ -304,6 +304,27 @@ public class OpenGlAttemptActivity  extends GvrActivity implements GvrView.Stere
                 headRotation[0], headRotation[1], headRotation[2], headRotation[3]);
         // Regular update call to GVR audio engine.
         gvrAudioEngine.update();
+        if (debugVectorId == R.id.vector_forward) {
+            float[] f = new float[4];
+            headTransform.getForwardVector(f, 0);
+            mTextRenderer.updateTestVector(f);
+        } else if (debugVectorId == R.id.vector_up) {
+            float[] f = new float[4];
+            headTransform.getUpVector(f, 0);
+            mTextRenderer.updateTestVector(f);
+        } else if (debugVectorId == R.id.vector_quat) {
+            float[] f = new float[4];
+            headTransform.getQuaternion(f, 0);
+            mTextRenderer.updateTestVector(f);
+        } else if (debugVectorId == R.id.vector_right) {
+            float[] f = new float[4];
+            headTransform.getRightVector(f, 0);
+            mTextRenderer.updateTestVector(f);
+        } else if (debugVectorId == R.id.vector_trans) {
+            float[] f = new float[4];
+            headTransform.getTranslation(f, 0);
+            mTextRenderer.updateTestVector(f);
+        }
 
         /*
         Log.i(TAG, "on new frame "+ headTransform);
@@ -336,6 +357,8 @@ public class OpenGlAttemptActivity  extends GvrActivity implements GvrView.Stere
                         headTransform.getUpVector(f, 0);
                         mDebugVectorText.setText(String.format(Locale.ENGLISH, "%.2f  %.2f  %.2f  %.2f", f[0], f[1], f[2], f[3]));
                     } else if (debugVectorId == R.id.vector_quat) {
+                        // The inertial frame is an Earth-fixed coordinate frame defined so that
+                        // the x-axis points north, the y-axis points east, and the z-axis points down
                         float[] f = new float[4];
                         headTransform.getQuaternion(f, 0);
                         mDebugVectorText.setText(String.format(Locale.ENGLISH, "%.2f  %.2f  %.2f  %.2f", f[0], f[1], f[2], f[3]));

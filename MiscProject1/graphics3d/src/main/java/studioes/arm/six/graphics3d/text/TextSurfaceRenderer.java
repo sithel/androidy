@@ -122,4 +122,7 @@ public class TextSurfaceRenderer implements GLSurfaceView.Renderer, ITextRendere
     int getGLSurfaceTexture() {
         return mGlSurfaceTexture;
     }
+
+    public void updateTestVector(float[] f) {
+    }
 }

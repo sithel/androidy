@@ -1,6 +1,7 @@
 package studioes.arm.six.graphics3d.text;
 
 import android.content.Context;
+import android.hardware.SensorManager;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES30;
 import android.opengl.Matrix;
@@ -478,6 +479,11 @@ public class CubeThing extends TextSurfaceRenderer {
         Matrix.frustumM(mProjectionMatrix, 0, left, right, bottom, top, near, far);
     }
 
+    float[] mTestVector;
+    public void updateTestVector(float[] testVector) {
+        mTestVector = testVector;
+    }
+
     @Override
     public void onDrawFrame(GL10 gl) {
         super.onDrawFrame(gl);
@@ -507,21 +513,6 @@ public class CubeThing extends TextSurfaceRenderer {
         GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
         GLES30.glUniform1i(mTextureUniformHandle, 0);
 
-
-//        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, 0);
-//        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, glSurfaceTex);
-//        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-
-
-//        // Set the active texture unit to texture unit 0.
-//        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-//
-//        // Bind the texture to this unit.
-//        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, glSurfaceTex);
-
-        // Tell the texture uniform sampler to use this texture in the shader by binding to texture unit 0.
-//        GLES20.glUniform1i(mTextureUniformHandle, 0);
-
         // Calculate position of the light. Rotate and then push into the distance.
         Matrix.setIdentityM(mLightModelMatrix, 0);
         Matrix.translateM(mLightModelMatrix, 0, 0.0f, 0.0f, -4.0f);
@@ -534,9 +525,15 @@ public class CubeThing extends TextSurfaceRenderer {
 
 
         Matrix.setIdentityM(mModelMatrix, 0);
-        Matrix.translateM(mModelMatrix, 0, 0.0f, 0.0f, -3.3f);
+        if (mTestVector != null) {
+            float[] rotationMatrix = new float[16];
+            SensorManager.getRotationMatrixFromVector(rotationMatrix, mTestVector);
+            Matrix.multiplyMM(mModelMatrix, 0, mModelMatrix, 0, rotationMatrix, 0);
+        }
+        Matrix.translateM(mModelMatrix, 0, 0.0f, 0.0f, -3.3f);  // putting this before the multiple makes a stationary head that rotates
+
 //        Matrix.rotateM(mModelMatrix, 0, 0, 1.0f, 1.0f, 0.0f);
-        Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 1.0f, 1.0f, 0.0f);
+        //Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 1.0f, 1.0f, 0.0f);
         drawCube();
 
         // Draw a point to indicate the light.
